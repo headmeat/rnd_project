@@ -94,14 +94,8 @@ univDistinct.show
 // 월요일에 보경언니랑 임박사님께 데이터 다시 확인해보고
 // 일단 이거로 긁어오기
 //
-// 각각의 학부에서 학과 긁어오기
-
-
-
-
-
-
-
+// 대학교 별 학과 긁어오기
+//from 학생정보 테이블
 val studentInfoTable = getMongoDF(spark, stInfoUri)
 studentInfoTable.show
 val univAndDepart = studentInfoTable.select(col("COLG_CD"), col("COLG_CD_NM"), col("SUST_CD"), col("SUST_CD_NM"))
@@ -121,12 +115,30 @@ language.show
 design.show
 
 
-
-//모든 학교의 모든 학과를 중복제거해서 가져온 것이니까
-//학교 하나 당 학과를 중복제거해서 가져와야 함!
-
 //------------------------------------------------------------------------------
 //2.학과 별 교과과목
+//01.공학부 학생들이 수강한 교과정보
+//from 교과정보 테이블
+val classInfoTable = getMongoDF(spark, clInfoUri)
+classInfoTable.show
+
+val classInfo = classInfoTable.select(col("COLG_CD"), col("COLG_CD_NM"), col("SBJT_KOR_NM"))
+classInfo.show
+
+//학과아이디? 학교아이디가 이건 또 많음 
+val colg_cd = classInfoTable.select(col("COLG_CD"))
+val colg_cd_distinct = colg_cd.distinct
+colg_cd_distinct.show
+
+
+val classInfoFromMechanic = classInfo.where($"COLG_CD"==="00001")
+val classInfoFromMechanicDistinct = classInfoFromMechanic.distinct
+classInfoFromMechanicDistinct.show(30)
+
+
+val classInfoFromMechanic = classInfo.where($"COLG_CD"==="00002")
+val classInfoFromMechanicDistinct = classInfoFromMechanic.distinct
+classInfoFromMechanicDistinct.show(30)
 
 
 
