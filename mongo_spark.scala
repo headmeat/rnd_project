@@ -60,28 +60,106 @@ coll: String,
 df : DataFrame ) = {
 df.saveToMongoDB(WriteConfig(Map("uri"->(base+coll))))
 }
+//------------------------------------------------------------------------------
+//mongodb 안켜져있으면  cd $SPARK_HOME에서 mongod 하고 다른 쉘에서 같은 위치로 이동하고 mongo 하고 또 다른 쉘에서 다시 spark 실행
+
+//학교 구분해서 가져옴
+val university = getMongoDF(spark, clInfoUri)
+val univDF = university.toDF
+val univAll = univDF.select(col("COLG_CD_NM"))
+val univDistinct = univAll.distinct
+univDistinct.show
+
+//------------------------------------------------------------------------------
+//1.학교 별 학과 : 학생 정보 테이블에서 대학코드 1개로 학과 select
+// val departmentInfo = university.select(col("SUST_CD_NM"))
+// val departDistinct = departmentInfo.distinct
+// departDistinct.show
+
+// db.collection이름.find()
+//
+// [테이블]
+// 학생정보 V_STD_CDP_SREG
+// 비교과정보 CPS_NCR_PROGRAM_INFO
+// 비교과 신청 학생 CPS_NCR_PROGRAM_STD
+// 교과정보 V_STD_CDP_SUBJECT
+// 교과목 수료 V_STD_CDP_PASSCURI
+// 교외활동 CPS_OUT_ACTIVITY_MNG
+
+
+// COLG_CD(대학코드), COLG_CD_NM(대학명)
+// 01, 공학부
+// 02, 디자인예술학부
+// 03, 어문사회학부
+// 월요일에 보경언니랑 임박사님께 데이터 다시 확인해보고
+// 일단 이거로 긁어오기
+//
+// 각각의 학부에서 학과 긁어오기
+
+
+
+
+
+
+
+val studentInfoTable = getMongoDF(spark, stInfoUri)
+studentInfoTable.show
+val univAndDepart = studentInfoTable.select(col("COLG_CD"), col("COLG_CD_NM"), col("SUST_CD"), col("SUST_CD_NM"))
+univAndDepart.show
+
+
+val mechanic_01 = univAndDepart.where($"COLG_CD"===1)
+val language_02 = univAndDepart.where($"COLG_CD"===2)
+val design_03 = univAndDepart.where($"COLG_CD"===3)
+
+//학교 별 학과 고유하게 출력
+val mechanic = mechanic_01.distinct
+val language = language_02.distinct
+val design = design_03.distinct
+mechanic.show
+language.show
+design.show
+
+
+
+//모든 학교의 모든 학과를 중복제거해서 가져온 것이니까
+//학교 하나 당 학과를 중복제거해서 가져와야 함!
+
+//------------------------------------------------------------------------------
+//2.학과 별 교과과목
+
+
+
+//------------------------------------------------------------------------------
+//3.학과 별 비교과 과목
+
+
+
+//------------------------------------------------------------------------------
+//4.학과 별 자율활동
+
+
+
+
+
+
+
 
 
 // val test = getMongoDF(spark, jobInfoUri)
 // test.show(10)
 
-val department = getMongoDF(spark, clInfoUri)
-// department.show(20)
+// val university = getMongoDF(spark, clInfoUri)
+// university.show(20)
 
-val spark = SparkSession.builder().appName("Spark SQL basic example").config("spark.some.config.option", "some-value").getOrCreate()
-
-
-import spark.implicits._
-
-val test = spark.createDataFrame(department)
-test.printScheme()
+// val spark = SparkSession.builder().appName("Spark SQL basic example").config("spark.some.config.option", "some-value").getOrCreate()
 
 
+// import spark.implicits._
 
+// val test = spark.createDataFrame(university)
+// test.printScheme()
 
-val ds = department.toDF
-ds.select(col("COLG_CD_NM")).show()
-
-val departmentAll = ds.select(col("COLG_CD_NM"))
-val department = depart.distinct
-department.show
+// val university = getMongoDF(spark, clInfoUri)
+// val univDF = university.toDF
+// univDF.select(col("COLG_CD_NM")).show()
