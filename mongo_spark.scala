@@ -60,3 +60,9 @@ df.saveToMongoDB(WriteConfig(Map("uri"->(base+coll))))
 
 val test = getMongoDF(spark, jobInfoUri)
 test.show(10)
+
+// 비교과 신청학생 목록
+val ncr = getMongoDF(spark, ncrStdInfoUri)
+val ncrStdNo = ncr.select(col("NPS_STD_NO"))
+ncrStdNo.show
+val ncrStdNoAnd = ncr.select(col("NPS_STD_NO"))
