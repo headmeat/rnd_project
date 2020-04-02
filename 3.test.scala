@@ -72,10 +72,12 @@ var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
 var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
 
 
-var name = '0'
+val name
 student_have_sbjt_List.foreach{x =>
   // println(x)
-  name = x
+  // var name = "test"
+  val name = x
+  println(x)
   // val res = student_have_sbjt_List.contains(name)
   // // print(res)
   // if(res == true){
@@ -83,7 +85,7 @@ student_have_sbjt_List.foreach{x =>
   // }
   // print(test)
 }
-println(name)
+
 
 
 
