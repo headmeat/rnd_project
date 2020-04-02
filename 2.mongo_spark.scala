@@ -53,3 +53,20 @@ coll: String,
 df : DataFrame ) = {
 df.saveToMongoDB(WriteConfig(Map("uri"->(base+coll))))
 }
+
+
+val replyUri_table = getMongoDF(spark, replyUri)  //댓글
+val codeUri_table =  getMongoDF(spark, codeUri)  //통합 코드관리 테이블
+val gradCorpUri_table =  getMongoDF(spark, gradCorpUri)  //졸업 기업
+val ncrInfoUri_table =  getMongoDF(spark, ncrInfoUri)  //비교과 정보
+val ncrStdInfoUri_table =  getMongoDF(spark, ncrStdInfoUri)  //비교과 신청학생
+val outActUri_table =  getMongoDF(spark, outActUri)  //교외활동
+val jobInfoUri_table =  getMongoDF(spark, jobInfoUri)  //채용정보-관리자 등록
+val sjobInfoUri_table =  getMongoDF(spark, sjobInfoUri)  //채용정보 신청 학생 정보(student job info)
+
+
+val deptInfoUri_table =  getMongoDF(spark, deptInfoUri)  //학과 정보 (department info)
+val clPassUri_table =  getMongoDF(spark, clPassUri) //교과목 수료(class pass)
+val stInfoUri_table =  getMongoDF(spark, stInfoUri)  //학생 정보 (student info)
+val pfInfoUri_table =  getMongoDF(spark, pfInfoUri)  //교수 정보 (professor info)
+val clInfoUri_table =  getMongoDF(spark, clInfoUri)  //교과 정보 (class info)
