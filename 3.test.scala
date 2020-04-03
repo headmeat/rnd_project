@@ -1,4 +1,5 @@
-//--------------------from. 교과목수료 테이블 : 학과명, 학번-------------------------
+//-------------------- # # # 교과목 리스트 # # # --------------------------------
+//--------------------from. 교과목수료 테이블 : 학과명, 학번----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 //###학과 별 학생 번호 보기 ###
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
@@ -69,3 +70,13 @@ val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
   isListened_List_temp2
 }
 val isListened_List = isListened_List_temp1.map(_._2)
+
+
+//-------------------- # # # 자율활동 리스트 # # # ------------------------------
+//from.교외활동 CPS_OUT_ACTIVITY_MNG : 학번(OAM_STD_NO), 활동구분코드(OAM_TYPE_CD), 활동명(OAM_TITLE)
+//자격증(CD01) : 이름(OAM_TITLE) / ex. 토익800~900, FLEX 일본어 2A,  FLEX 일본어 1A,  FLEX 중국어 1A
+//어학(CD02) : 이름(OAM_TITLE)
+//봉사(CD03), 대외활동(CD04), 기관현장실습(CD05) : 활동구분코드(OAM_TYPE_CD)
+
+
+var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
