@@ -73,23 +73,25 @@ var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.m
 
 
 
-var test = 0
 
-val ttmp = sbjtNM_List
-
-val res0 = ttmp.map(x => (x, 0)).map{ record =>
+val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+  //x : record_1
+  //0 : record_2
+  //isListend면 1로 바뀜
   val name = record._1
-  val isListen =
+  val isListened =
     if(student_have_sbjt_List.contains(name)) {
       1
     }
     else 0
-  val res = (name, isListen)
-  print(res)
-  res
+  val isListened_List_temp2 = (name, isListened)
+  print(isListened_List_temp2)
+  //리턴하려면 이름을 쳐야 함
+  //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
+  isListened_List_temp2
 }
-res0.map(_._2)
-res.
+val isListened_List = isListened_List_temp1.map(_._2)
+
 
 
 
