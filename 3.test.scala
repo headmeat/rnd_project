@@ -72,6 +72,44 @@ var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
 var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
 
 
+
+var test = 0
+
+val ttmp = sbjtNM_List
+
+val res0 = ttmp.map(x => (x, 0)).map{ record =>
+  val name = record._1
+  val isListen =
+    if(student_have_sbjt_List.contains(name)) {
+      1
+    }
+    else 0
+  val res = (name, isListen)
+  print(res)
+  res
+}
+res0.map(_._2)
+res.
+
+
+
+
+
+
+sbjtNM_List.foreach{name =>
+  //print(name)
+  val res = student_have_sbjt_List.contains(name)
+  // print(res)
+  if(res == true){
+     test = 1
+  }
+  print(test)
+}
+
+
+
+
+
 val name
 student_have_sbjt_List.foreach{x =>
   // println(x)
@@ -89,16 +127,10 @@ student_have_sbjt_List.foreach{x =>
 
 
 
-// var test = 0
-// sbjtNM_List.foreach{name =>
-//   //print(name)
-//   val res = student_have_sbjt_List.contains(name)
-//   // print(res)
-//   if(res == true){
-//      test = 1
-//   }
-//   print(test)
-// }
+
+
+
+
 
 var test = 0
 sbjtNM_List.foreach{name =>
