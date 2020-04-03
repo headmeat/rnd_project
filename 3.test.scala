@@ -21,20 +21,6 @@ var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equal
 
 
 
-// //--------------------from. 교과정보 테이블 V_STD_CDP_SUBJECT : 학과이름, 교과목코드, 수업명-------------------------
-//
-// var clInfoUri_DF = clInfoUri_table.select(col("SUST_CD_NM"), col("SBJT_KEY_CD"), col("SBJT_KOR_NM")).distinct.toDF
-//
-// //세무회계학과에서 개설된 교과목 데이터프레임
-// var sbjtNM_in_departNM = clInfoUri_DF.filter(clInfoUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
-// sbjtNM_in_departNM.show
-// // var classNM_test = classInfoDF_test2.select(col("SBJT_KOR_NM"))
-// // var classInfoList = classNM_test.select("SBJT_KEY_CD").rdd.map(r=>r(0)).collect.toList
-//
-// var classKey_test = classInfoDF_test2.select(col("SBJT_KOR_NM"))
-// var classInfoList = classKey_test.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList
-
-
 
 
 //--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명-------------------------
@@ -49,18 +35,10 @@ var sbjtNM_List = sbjtNM_in_departNM.drop("SUST_CD_NM").select("SBJT_KOR_NM").rd
 
 
 
-
-
-
 //컴퓨터공학과 학생 학번을 가지고 그 사람이 수강한 교과목 리스트 생성
-
-
 //학과로 filter
 //학번으로 filter해서
 //수업명을 리스트로 생성
-
-
-
 
 var departNM = "컴퓨터공학과"
 var std_NO = 20190030
@@ -91,100 +69,3 @@ val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
   isListened_List_temp2
 }
 val isListened_List = isListened_List_temp1.map(_._2)
-
-
-
-
-
-
-
-sbjtNM_List.foreach{name =>
-  //print(name)
-  val res = student_have_sbjt_List.contains(name)
-  // print(res)
-  if(res == true){
-     test = 1
-  }
-  print(test)
-}
-
-
-
-
-
-val name
-student_have_sbjt_List.foreach{x =>
-  // println(x)
-  // var name = "test"
-  val name = x
-  println(x)
-  // val res = student_have_sbjt_List.contains(name)
-  // // print(res)
-  // if(res == true){
-  //    test = 1
-  // }
-  // print(test)
-}
-
-
-
-
-
-
-
-
-
-var test = 0
-sbjtNM_List.foreach{name =>
-  //print(name)
-  val res : Boolean = student_have_sbjt_List.exists(name => name == "")
-  // print(res)
-  if(res == true){
-     test = 1
-  }
-  print(test)
-}
-
-
-val doesPlainDonutExists: Boolean = donuts.exists(donutName => donutName == "Plain Donut")
-
-// var classInfoList_print = classInfoList.foreach {println}
-// var getSBJT_key_from_depart_print = getSBJT_key_from_depart_List.foreach {println}
-
-
-
-for( a <- 1 to 3; b <- 10 to 12){
-   println(a,b)
-}
-
-
-
-
-
-
-
-// classInfoList.foreach{name =>
-//   if(getSBJT_key_from_depart_List.contains(name)){
-//     print("yes")
-//   }
-// }
-//
-// val m1 = List(1, 3, 5, 2)
-// val res = m1.contains(1)
-// println(res)
-//
-// var test = 0
-//
-// if(res == true){
-//    test = 1
-// }
-//
-// println(test)
-
-
-
-
-
-// getSBJT_key_from_depart_List.foreach{name1 =>
-//   print(name1)
-// }
