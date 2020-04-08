@@ -91,7 +91,7 @@ val isListened_List = isListened_List_temp1.map(_._2)
 var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}"))
 
 
-import spark.implicits._
+// import spark.implicits._
 
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
 var departNM = "광고홍보학과"
@@ -100,12 +100,28 @@ var std_NO = 201937039
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
-var student_activity_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+
+//광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
+var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+
+var testDF = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
+
+var test = List
+
+//광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
+// var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
+
+//광홍과 학번을 돌면서
+stdNO_in_departNM.foreach{stdNO =>
+  // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
+
+
+  //학생 하나에 대해 교외활동테이블에서 학번, 활동코드, 활동이름을 가져와 dataframe 형태로 생성
+  val activityList_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
+  // activityList_temp1.show
 
 
 
-student_activity_temp1.foreach{stdNO =>
-  val test1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
   //test1.show
   //학번 하나에 대한 결과만 나오는게 이상함
   //OAM_TYPE_CD에서 04,05 제거
@@ -113,9 +129,89 @@ student_activity_temp1.foreach{stdNO =>
   //OAM_TITLE은 중복 제거 distinct
   //최종 df를 list로 변환하여 학과 자율활동 리스트 생성
 
-  var test2 = outActUri_DF.filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02" || $"OAM_TYPE_CD" ==="OAMTYPCD03")
-  test2.show
+
+
+
+  //활동코드에서 봉사,대외,기관을 필터링한 dataframe
+  var activityList_temp2 = activityList_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
+  // activityList_temp2.show
+
+
+  // var test3 = test2.filter($"OAM_STD_NO"===s"${stdNO}")
+  // test = test3.rdd.map(r=>r(0)).collect.toList
+  // test3.show
+
+
+  //List1 : 코드(중복제거x) -> map 함수로 df에서 list 변환
+  //List2 : 이름(중복제거) -> map 함수로 df에서 list 변환
+  //List3 : List1 + List2 = 코드리스트 + 이름리스트 (학생 한명이 수행한 자율활동내용)
+
+  // test1가지고 리스트를 만들건데
+  // OAM_type_cd 로 list1만들기
+
+
+  //교과목수료테이블에서 학ㄱ
+  //var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+
+  // var code_list = test2.drop("OAM_STD_NO", "OAM_TITLE").rdd.map(r=>r(0)).collect.toList
+  // code_list
+
+
+
+  var activityList1 = activityList_temp2.drop("OAM_STD_NO", "OAM_TITLE").rdd.map(r=>r(0)).collect.toList
+  activityList1
 }
+
+
+//---------------------자율활동 code list(자격증01, 어학02)----------------------
+var departNM = "광고홍보학과"
+var std_NO = 201937039
+
+
+//5개의 코드
+val outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${201937039}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
+//3개의 코드만 필터링
+var outAct_code_temp2 = outAct_code_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
+//학생 한명의 활동 코드만 존재하는 dataframe
+var outAct_code_temp3 = outAct_code_temp2.drop("OAM_STD_NO", "OAM_TITLE").groupBy("OAM_TYPE_CD").count()
+
+//모든 학과 모든 학생이 수행한 자율활동은 총 845개인데
+//광홍과 201937039학생이 수행한 활동만 260개이고 나머지 광홍과 학생들의 데이터는 존재하지 않음
+
+//이제 코드 3개에 대해 groupby와 agg 연산을 사용하여 코드 별로 count
+var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
+//------------------------------------------------------------------------------
+
+
+
+
+//---------------------자율활동 name list(자격증01, 어학02)----------------------
+//5개의 코드
+val outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${201937039}")).select(col("OAM_STD_NO"), col("OAM_TITLE")).distinct
+//3개의 코드만 필터링
+var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
+
+var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
+//------------------------------------------------------------------------------
+
+
+//----------codeList + nameList = 학생 하나의 리스트-----------------------------
+var outAct_std_List = outAct_code_List ::: outAct_name_List
+outAct_std_List
+//------------------------------------------------------------------------------
+
+
+
+
+
+//학과 리스트
+//
+var outAct_depart_temp1 = List("OAMTYPCD01", "OAMTYPCD02", "OAMTYPCD03")
+
+//name list를 합치고 중복 제거
+
+//모든 학생의 리스트를 for문으로 만들어가면서 append 시키고 중복 제거
+var outAct_depart_temp2 =
 
 
 
