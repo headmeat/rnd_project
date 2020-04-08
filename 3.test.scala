@@ -1,5 +1,5 @@
 //-------------------- # # # 교과목 리스트 # # # --------------------------------
-//--------------------from. 교과목수료 테이블 : 학과명, 학번----------------------
+//--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 //###학과 별 학생 번호 보기 ###
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
@@ -79,4 +79,52 @@ val isListened_List = isListened_List_temp1.map(_._2)
 //봉사(CD03), 대외활동(CD04), 기관현장실습(CD05) : 활동구분코드(OAM_TYPE_CD)
 
 
+
+//학과 학생들 서치
+//학과df
+//for문으로 거기 있는 학번을 입력하고 자율활동내역을 긁어오고 -> 학생리스트
+//학과 리스트 생성
+//횟수 리스트
+
+
+//학번으로 학과 찾기
+var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}"))
+
+
+import spark.implicits._
+
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
+var departNM = "광고홍보학과"
+var std_NO = 201937039
+
+var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+//map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
+var student_activity_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+
+
+
+student_activity_temp1.foreach{stdNO =>
+  val test1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
+  //test1.show
+  //학번 하나에 대한 결과만 나오는게 이상함
+  //OAM_TYPE_CD에서 04,05 제거
+  //OAM_TYPE_CD는 중복 허용
+  //OAM_TITLE은 중복 제거 distinct
+  //최종 df를 list로 변환하여 학과 자율활동 리스트 생성
+
+  var test2 = outActUri_DF.filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02" || $"OAM_TYPE_CD" ==="OAMTYPCD03")
+  test2.show
+}
+
+
+
+
+
+
+// val student_activity_list_temp1 = students_in_departNM.map{ stdNO =>
+//   // record == 학번
+//   // 학생이 수행한 자율활동 리스트 : 봉사코드, 대외코드, 기관코드, / 자격증 이름, 어학 이름
+//   var test1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
+//   test1
+// }
