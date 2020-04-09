@@ -88,7 +88,7 @@ val isListened_List = isListened_List_temp1.map(_._2)
 
 
 //학번으로 학과 찾기
-var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}"))
+var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${201937029}"))
 
 
 import spark.implicits._
@@ -111,8 +111,9 @@ var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s
 
 
 // stdNO_in_departNM.foreach{stdNO =>
-var list_append = List("컴활")
-stdNO_in_departNM.foreach{ stdNO =>
+var depart_activity_List = List[Any]()
+
+stdNO_in_departNM.slice(0, 10).foreach{ stdNO =>
   //List1 : 코드(중복제거x) -> map 함수로 df에서 list 변환
   //List2 : 이름(중복제거) -> map 함수로 df에서 list 변환
   //List3 : List1 + List2 = 코드리스트 + 이름리스트 (학생 한명이 수행한 자율활동내용)
@@ -120,7 +121,7 @@ stdNO_in_departNM.foreach{ stdNO =>
   //5개의 코드
 
   var tempNum = stdNO
-  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${tempNum}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
+  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${201937039}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
   //3개의 코드만 필터링
   var outAct_code_temp2 = outAct_code_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
   //학생 한명의 활동 코드만 존재하는 dataframe
@@ -135,7 +136,7 @@ stdNO_in_departNM.foreach{ stdNO =>
 
   //---------------------자율활동 name list(자격증01, 어학02)----------------------
   //5개의 코드
-  var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${tempNum}")).select(col("OAM_STD_NO"), col("OAM_TITLE")).distinct
+  var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${201937039}")).select(col("OAM_STD_NO"), col("OAM_TITLE")).distinct
   //3개의 코드만 필터링
   var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
 
@@ -146,18 +147,7 @@ stdNO_in_departNM.foreach{ stdNO =>
     //println(s"##### SIZE : ${t_size} RESULT => " + outAct_name_List)
   }
 
-  list_append = list_append ++ outAct_name_List
-  // outAct_name_List.foreach{ name =>
-  //   val c = name.split(",")
-  //   list_append.append((c(0), c(1)))
-  // }
-
-
-  //원본리스트 + 값 추가해서 원본리스트 변형
-
-
-
-  //------------------------------------------------------------------------------
+  depart_activity_List = depart_activity_List ++ outAct_name_List
 
   //----------codeList + nameList = 학생 하나의 리스트-----------------------------
   // var outAct_std_List = outAct_code_List ::: outAct_name_List
@@ -172,13 +162,9 @@ stdNO_in_departNM.foreach{ stdNO =>
   // //모든 학생의 리스트를 for문으로 만들어가면서 append 시키고 중복 제거
   // var outAct_depart_temp2 =
 }
-list_append
+depart_activity_List
 
 
-
-val x = MutableList(1, 2, 3, 4, 5)
-x += 6
-x ++= MutableList(7, 8, 9)
 
 
 
