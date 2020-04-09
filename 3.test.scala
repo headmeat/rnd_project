@@ -94,7 +94,8 @@ var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s
 
 //광홍과 학번을 돌면서
 
-// stdNO_in_departNM.foreach{stdNO =>
+
+
 var activity_List_byStd = List[Any]()
 
 stdNO_in_departNM.foreach{ stdNO =>
@@ -172,3 +173,13 @@ stdNO_in_departNM.foreach{ stdNO =>
  //학생 별 코드 횟수, 이름 유무 리스트 출력
  println("activity List !!! : " + activity_List_byStd)
 }
+//------------------------------------------------------------------------------
+
+//-------------------- # # # 비교과 리스트 # # # --------------------------------
+// from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT)
+// from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
+
+//비교과 아이디(학번, 비교과id 사용 from.교과/비교과별점테이블)로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블)
+
+//학과 별 학생들이 수강한 비교과의 중뷴류 list 로 포맷 잡고 : 학과 - 학번 돌면서 list 만들고 , 중분류로 바꿔주기
+//학생 한명이 수강한 비교과 list -> 별점 가져오기(from. 교과/비교과 별점 테이블) -> 중분류 가져오기 -> 중분류 별 별점 avg 계산
