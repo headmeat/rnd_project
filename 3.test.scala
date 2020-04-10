@@ -199,9 +199,43 @@ var departNM = "컴퓨터공학과"
 var std_NO1 = 20190030
 var std_NO2 = 20142820
 
+//--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
+var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 
 
-//학번으로 학과 찾기
-var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${20190030}"))
+//학번으로 학과 찾기 dataframe
+var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO1}"))
 
-var test = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${20190030}"))
+//학번으로 별점 가져오기 dataframe
+var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO1}"))
+
+
+// from.별점테이블 (cpsStarUri_DF) 학번에 따라 프로그램 code 가져오기 + 내용을 list에 저장
+// ncrInfoUri_DF.filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${}"))
+
+// 학번 하나에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
+var key_id_temp = cpsStarUri_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO1}"))
+var key_id_list = key_id_temp.rdd.map(r=>r(0)).collect.toList
+
+var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
+
+var sub_cd_list = List[Any]()
+
+var test = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo("NCR000000000718"))
+
+//--------------------mongodb에서 collection 복제---------------------
+// db.CPS_NCR_PROGRAM_INFO.find().forEach( function(x){db.CPS_NCR_PROGRAM_INFO2.insert(x)} )
+// 데이터 삭제 (지우기전에 원본데이터 하나 복사해두고 그거를 insert)
+//db.CPS_NCR_PROGRAM_INFO2.remove({NPI_KEY_ID:"NCR000000000718"})
+
+key_id_list.foreach{ keyid =>
+  println(keyid)
+  var sub_cd_list_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+  sub_cd_list = sub_cd_list_temp.rdd.map(r=>r(0)).collect.toList
+  // temp
+  var get_star_temp = getStar_by_stdNO.select(col("STAR_POINT")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
+  get_star_temp.show
+}
+sub_cd_list
+
+// 재용오빠가 mongodb에서 중복데이터 제거하는 코드짠 뒤 다시 테스트

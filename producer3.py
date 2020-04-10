@@ -7,6 +7,7 @@ from json import dumps
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
 import datetime
+import logging as log
 
 sys.path.insert(1, '/root/rnd_project/consumer')
 from func import getSerial, getOrigin, makeDictFactory
@@ -255,15 +256,6 @@ for result in results:
     print(result)
     producer.send('CPS_BOARD_REPLY', value=data)
     future = producer.send('CPS_BOARD_REPLY', value=data)
-
-# Block for 'synchronous' sends
-try:
-    record_metadata = future.get(timeout=10)
-
-except KafkaError:
-    # Decide what to do if produce request failed...
-    log.exception()
-    pass
 
 #print('CPS_BOARD_REPLY 테이블 전송완료')
 
