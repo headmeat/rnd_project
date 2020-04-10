@@ -185,49 +185,62 @@ stdNO_in_departNM.foreach{ stdNO =>
 //학과 별 학생들이 수강한 비교과의 중뷴류 list 로 포맷 잡고 : 학과 - 학번 돌면서 list 만들고 , 중분류로 바꿔주기
 //학생 한명이 수강한 비교과 list -> 별점 가져오기(from. 교과/비교과 별점 테이블) -> 중분류 가져오기 -> 중분류 별 별점 avg 계산
 
-//별점테이블 dataframe
-var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"))
 
-var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${201403065}"))
-
-
-//비교과 관련 dataframe
+// from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
+var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+// from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 
+// 비교과 별점 => 별점 테이블에서 "TYPE"이 "N" 
+var cpsStarUri_ncr_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("N"))
+// 교과 별점 => 별점 테이블에서 "TYPE"이 "C"
+var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C"))
 
 var departNM = "컴퓨터공학과"
 var std_NO1 = 20190030
 var std_NO2 = 20142820
 
-//--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
+var std_NO3 = 201403065
+
+var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+//map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
+
+//광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
+var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+
+
+
+//--------------------from. 교과목수료 테이블 : 학과명, 학번----------------------
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 
+//학번으로 학생의 학과 찾기 (dataframe)
+var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
-//학번으로 학과 찾기 dataframe
-var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO1}"))
-
-//학번으로 별점 가져오기 dataframe
-var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO1}"))
+//학번으로 별점 가져오기 (dataframe)
+var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
 
 // from.별점테이블 (cpsStarUri_DF) 학번에 따라 프로그램 code 가져오기 + 내용을 list에 저장
 // ncrInfoUri_DF.filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${}"))
 
 // 학번 하나에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
-var key_id_temp = cpsStarUri_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO1}"))
+var key_id_temp = cpsStarUri_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO3}"))
 var key_id_list = key_id_temp.rdd.map(r=>r(0)).collect.toList
 
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 
 var sub_cd_list = List[Any]()
 
-var test = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo("NCR000000000718"))
+// var test = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo("NCR000000000718"))
 
 //--------------------mongodb에서 collection 복제---------------------
 // db.CPS_NCR_PROGRAM_INFO.find().forEach( function(x){db.CPS_NCR_PROGRAM_INFO2.insert(x)} )
-// 데이터 삭제 (지우기전에 원본데이터 하나 복사해두고 그거를 insert)
+//-------mongodb에서 데이터 삭제 : 지우기 전에 원본 데이터 복사해두고 하나만 insert------------
 //db.CPS_NCR_PROGRAM_INFO2.remove({NPI_KEY_ID:"NCR000000000718"})
 
+// 학번 하나에 대해서 그 학생이 수강한 교과/비교과 활동에 대한 List
+// 이 List를 돌면서 이 List
 key_id_list.foreach{ keyid =>
   println(keyid)
   var sub_cd_list_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))

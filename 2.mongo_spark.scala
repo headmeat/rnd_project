@@ -17,13 +17,14 @@ import org.apache.spark.sql.Column
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
+// val base ="mongodb://127.0.0.1/cpmongo."
 
-val base ="mongodb://127.0.0.1/cpmongo."
+val base ="mongodb://127.0.0.1/cpmongo_distinct."
 
 val replyUri = "CPS_BOARD_REPLY"  //댓글
 val codeUri = "CPS_CODE_MNG"  //통합 코드관리 테이블
 val gradCorpUri = "CPS_GRADUATE_CORP_INFO"  //졸업 기업
-val ncrInfoUri = "CPS_NCR_PROGRAM_INFO2"  //비교과 정보
+val ncrInfoUri = "CPS_NCR_PROGRAM_INFO"  //비교과 정보
 val ncrStdInfoUri = "CPS_NCR_PROGRAM_STD"  //비교과 신청학생
 val outActUri = "CPS_OUT_ACTIVITY_MNG"  //교외활동
 val jobInfoUri = "CPS_SCHOOL_EMPLOY_INFO"  //채용정보-관리자 등록

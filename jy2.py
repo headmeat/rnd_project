@@ -44,7 +44,7 @@ for result in results:
 print('V_STD_CDP_SREG 테이블 전송완료')
 
 V_STD_CDP_SREG.close()
-"""
+
 #V_STD_CDP_DEPT(부서정보 테이블) 가져오기
 V_STD_CDP_DEPT = conn.cursor()
 V_STD_CDP_DEPT.execute('SELECT * FROM V_STD_CDP_DEPT')
@@ -116,7 +116,7 @@ for result in results:
     data = result
     print(result)
     producer.send('V_STD_CDP_STAF', value=data)
-    
+
 print('V_STD_CDP_STAF 테이블 전송완료')
 
 V_STD_CDP_STAF.close()
@@ -181,7 +181,7 @@ for result in results:
 print('CPS_NCR_PROGRAM_INFO 테이블 전송완료')
 
 CPS_NCR_PROGRAM_INFO.close()
-"""
+
 #CPS_NCR_PROGRAM_STD (비교과_신청학생_테이블) 가져오기
 CPS_NCR_PROGRAM_STD = conn.cursor()
 CPS_NCR_PROGRAM_STD.execute('SELECT * FROM CPS_NCR_PROGRAM_STD')
@@ -201,7 +201,7 @@ for result in results:
 print('CPS_NCR_PROGRAM_STD 테이블 전송완료')
 
 CPS_NCR_PROGRAM_STD.close()
-"""
+
 #V_STD_CDP_SUBJECT(교과 정보) 가져오기
 V_STD_CDP_SUBJECT = conn.cursor()
 V_STD_CDP_SUBJECT.execute('SELECT * FROM V_STD_CDP_SUBJECT')
@@ -272,7 +272,7 @@ except KafkaError:
 print('CPS_BOARD_REPLY 테이블 전송완료')
 
 CPS_BOARD_REPLY.close()
-"""
+
 #CPS_STAR_POINT (교과/비교과용 별점 테이블) 가져오기
 CPS_STAR_POINT = conn.cursor()
 CPS_STAR_POINT.execute('SELECT * FROM CPS_STAR_POINT')
@@ -312,7 +312,7 @@ for result in results:
 print('CPS_OUT_ACTIVITY_MNG 테이블 전송완료')
 
 CPS_OUT_ACTIVITY_MNG.close()
-"""
+
 #CPS_SCHOOL_EMPLOY_INFO (교내외 채용정보-관리자 등록 테이블) 가져오기
 CPS_SCHOOL_EMPLOY_INFO = conn.cursor()
 CPS_SCHOOL_EMPLOY_INFO.execute('SELECT * FROM CPS_SCHOOL_EMPLOY_INFO')
@@ -372,7 +372,6 @@ for result in results:
 print('CPS_EMPLOY_SEARCH_HIS 테이블 전송완료')
 
 CPS_EMPLOY_SEARCH_HIS.close()
-"""
+
 #DB close
 conn.close()
-
