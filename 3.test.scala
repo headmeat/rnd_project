@@ -202,57 +202,67 @@ var std_NO2 = 20142820
 
 var std_NO3 = 201403065
 
-// var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
-// var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
-// //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
-//
-// //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
-// var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+// ---------------------------------------------------------------------------------------------------
+// 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932| |20152611| |20152615|
+// 1. 질의를 내린 학생의 학과를 검색
+// 2.
 
-
+// ---------------------------------------------------------------------------------------------------
 
 // from. 교과목수료 테이블 : 학과명, 학번 => 질의를 내린 학생의 학과를 찾기 위해 사용
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 
-//학번으로 학생의 학과 찾기 (dataframe)
-var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO1}"))
+//학번으로 학생의 학과 찾기 (dataframe) => 컴퓨터공학과 학생
+var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
-//학번으로 별점 가져오기 (dataframe)
-// To. 별점 테이블 mongodb 데이터 추가 해줌 --------------------------------
-var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO1}"))
+//학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
+var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
 
 // from.별점테이블 (cpsStarUri_DF) => 학번에 따라 프로그램 code 가져오기 + 내용을 list에 저장
 // ncrInfoUri_DF.filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${}"))
 
 // 학번 하나에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
-var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO1}"))
+var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 var key_id_list = key_id_temp.rdd.map(r=>r(0)).collect.toList
 
 
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 
 var sub_cd_list = List[Any]()
+var sub_star_list = List[Any]()
 
 // 비교과 활동 KEY_ID를 비교과 테이블에서 찾음 => 그 KEY_ID를 검색해 중분류를 가져오는 예시
 // 비교과 테이블에 존재하는 NCR~ ID를 이용해 별점 테이블에 데이터를 생성해줌 !!!!
-var test = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo("NCR000000000718"))
+var test = ncrInfoUri_DF.select(col("NPI_KEY_ID"),col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo("NCR000000000718"))
+//<학생 DataFrame> / 하나의 학과의 학생 => 지금 컴퓨터공학과 학생을 조회했으니까 컴퓨터공학과 학번을 조회해서 별점 테이블에 데이터를 삽입해줌
+var departNM = "컴퓨터공학과"
+//departNM에 담긴 학과의 학생들의 학번만 존재
+var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+students_in_departNM.show
+
+var star_point_list_temp = getStar_by_stdNO.select(col("STAR_POINT")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo("NCR000000000694"))
+
 
 //--------------------mongodb에서 collection 복제---------------------
 // db.CPS_NCR_PROGRAM_INFO.find().forEach( function(x){db.CPS_NCR_PROGRAM_INFO2.insert(x)} )
 //-------mongodb에서 데이터 삭제 : 지우기 전에 원본 데이터 복사해두고 하나만 insert------------
 //db.CPS_NCR_PROGRAM_INFO2.remove({NPI_KEY_ID:"NCR000000000718"})
 
-// 학번 하나에 대해서 그 학생이 수강한 교과/비교과 활동에 대한 List
-// 이 List를 돌면서 이 List
+// 학번 하나에 대해서 그 학생이 수강한 교과/비교과 활동에 대한 List => KEY_ID
 key_id_list.foreach{ keyid =>
   println(keyid)
-  var sub_cd_list_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
-  sub_cd_list = sub_cd_list_temp.rdd.map(r=>r(0)).collect.toList
-  // temp
-  var get_star_temp = getStar_by_stdNO.select(col("STAR_POINT")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
-  get_star_temp.show
+  var sub_cd_list_temp = ncrInfoUri_DF.select(col("NPI_KEY_ID"),col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+
+  var sub_cd_list_temp2 = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+  sub_cd_list_temp2.show
+  sub_cd_list = sub_cd_list_temp2.rdd.map(r=>r(0)).collect.toList
+
+  // 비교과 활동에 대한 별점을 가져옴
+  var star_point_list_temp = getStar_by_stdNO.select(col("STAR_POINT")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
+  star_point_list_temp.show
+
 }
-sub_cd_list
+
 
 // 재용오빠가 mongodb에서 중복데이터 제거하는 코드짠 뒤 다시 테스트
