@@ -29,7 +29,7 @@ var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(
 sbjtNM_in_departNM.show
 
 //@@@ 컴퓨터공학과에서 개설된 수업명을 리스트로 생성
-var sbjtNM_List = sbjtNM_in_departNM.drop("SUST_CD_NM").select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList
+var sbjtNM_List = sbjtNM_in_departNM.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList
 
 //컴퓨터공학과 학생 학번을 가지고 그 사람이 수강한 교과목 리스트 생성
 //학과로 filter
