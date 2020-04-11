@@ -21,6 +21,10 @@ import org.apache.log4j.Level
 
 val base ="mongodb://127.0.0.1/cpmongo_distinct."
 val output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
+val SREG_output_base = "mongodb://127.0.0.1/cpmongo_distinct.SREG_SIM"
+val NCR_output_base = "mongodb://127.0.0.1/cpmongo_distinct.NCR_SIM"
+val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
+//교과: SREG_SIM, 비교과: NCR_SIM, 자율활동: ACTIVITY_SIM
 
 
 val replyUri = "CPS_BOARD_REPLY"  //댓글
