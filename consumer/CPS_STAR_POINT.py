@@ -18,7 +18,7 @@ consumer = KafkaConsumer(
 client = MongoClient('localhost:27017')
 db = client.cpmongo
 
-CPS_CODE_MNG = db.CPS_STAR_POINT
+CPS_STAR_POINT = db.CPS_STAR_POINT
 
 for message in consumer:
     data = getOrigin(message.value)

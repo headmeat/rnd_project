@@ -40,10 +40,11 @@ for result in results:
     print(result)
     producer.send('V_STD_CDP_SREG', value=data)
 
+
 print('V_STD_CDP_SREG 테이블 전송완료')
 
 V_STD_CDP_SREG.close()
-"""
+
 #V_STD_CDP_DEPT(부서정보 테이블) 가져오기
 V_STD_CDP_DEPT = conn.cursor()
 V_STD_CDP_DEPT.execute('SELECT * FROM V_STD_CDP_DEPT')
@@ -115,7 +116,7 @@ for result in results:
     data = result
     print(result)
     producer.send('V_STD_CDP_STAF', value=data)
-    
+
 print('V_STD_CDP_STAF 테이블 전송완료')
 
 V_STD_CDP_STAF.close()
@@ -371,7 +372,6 @@ for result in results:
 print('CPS_EMPLOY_SEARCH_HIS 테이블 전송완료')
 
 CPS_EMPLOY_SEARCH_HIS.close()
-"""
+
 #DB close
 conn.close()
-
