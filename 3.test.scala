@@ -211,14 +211,8 @@ var departNM = "컴퓨터공학과"
 var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 students_in_departNM.show
 // ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
 // 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932| |20152611| |20152615|
-// 1. 질의를 내린 학생의 학과를 검색
-//
-
 // ---------------------------------------------------------------------------
-
-
 
 
 // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
@@ -233,8 +227,9 @@ var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")
 
 var departNM = "컴퓨터공학과"
 var std_NO1 = 20190030
+// 추가학생
 var std_NO2 = 20142820
-var std_NO3 = 201403065
+var std_NO3 = 20142932
 
 
 // from. 교과목수료 테이블 : 학과명, 학번 => 질의를 내린 학생의 학과를 찾기 위해 사용
@@ -246,12 +241,9 @@ var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"$
 //학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
 var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
-// from.별점테이블 (cpsStarUri_DF) => 학번에 따라 프로그램 code 가져오기 + 내용을 list에 저장
-// ncrInfoUri_DF.filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${}"))
-
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
 var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
-var key_id_List = key_id_temp.rdd.map(r=>r(0)).collect.toList
+var key_id_List_byStd = key_id_temp.rdd.map(r=>r(0)).collect.toList
 
 
 
@@ -259,7 +251,7 @@ var sub_cd_List = List[Any]()
 var sub_star_List = List[Any]()
 var ncr_List = List[Any]()
 var ncr_List_temp = List[Any]()
-var emptyDF = spark.emptyDataset[KV].toDF
+
 
 import org.apache.spark.sql.types.{
     StructType, StructField, StringType, IntegerType}
@@ -292,7 +284,7 @@ var star_subcd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema3)
 
 // var tmp = List[Any]()
 // 학생 한 명이 수행한 비교과 프로그램 keyid
-key_id_List.foreach{ keyid =>
+key_id_List_byStd.foreach{ keyid =>
 
   //비교과 id 로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블) (dataframe)
   var sub_cd_List_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
@@ -333,6 +325,9 @@ var star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") =
 var star_subcd_DF = star_subcd_DF_temp.drop("STAR_KEY_ID", "NPI_KEY_ID")
 //학과 별 학생들이 수강한 비교과의 중분류 list 로 포맷 잡고 : 학과 - 학번 돌면서 list 만들고 , 중분류로 바꿔주기
 //학생 한명이 수강한 비교과 list -> 별점 가져오기(from. 교과/비교과 별점 테이블) -> 중분류 가져오기 -> 중분류 별 별점 avg 계산
+
+var star_subcd_avg_DF = star_subcd_DF.groupBy("NPI_AREA_SUB_CD").agg(avg("STAR_POINT"))
+
 
 
 // 재용오빠가 mongodb에서 중복데이터 제거하는 코드짠 뒤 다시 테스트
