@@ -2,27 +2,35 @@
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 //###학과 별 학생 번호 보기 ###
-var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
-clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo("컴퓨터공학과")).show
+var gradCorpUri_DF = gradCorpUri_table.select(col("GCI_STD_NO"), col("GCI_SUST_CD_NM")).distinct.toDF
+// clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo("컴퓨터공학과")).show
 
 
 //@@@ 세무회계학과에서 개설된 수업이 없는 경우는 교과목리스트를 생성할 수 없음 => 교과목을 제외하고 유사도 비교를 수행해야 함 @@@
-clPassUri_table.select(col("SUST_CD_NM"), col("SBJT_KOR_NM")).distinct.toDF.filter(clPassUri_table("SUST_CD_NM").equalTo("컴퓨터공학과")).show
+// clPassUri_table.select(col("SUST_CD_NM"), col("SBJT_KOR_NM")).distinct.toDF.filter(clPassUri_table("SUST_CD_NM").equalTo("컴퓨터공학과")).show
 
 //<학생 DataFrame> / 하나의 학과의 학생
-var departNM = "컴퓨터공학과"
-var departNM = "광고홍보학과"
+var departNM = "세무회계학과"
 //departNM에 담긴 학과의 학생들의 학번만 존재
-var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+var students_in_departNM = gradCorpUri_DF.filter(gradCorpUri_DF("GCI_SUST_CD_NM").equalTo(s"${departNM}")).select(col("GCI_STD_NO"))
 students_in_departNM.show
+
+ // 201028406
+ // 201028409
+ // 201028407
+ // 201028410
+ // 201028411
 
 //studentDF_test 중 한명의 학번
 //세무회계학과의 학생
 var std_NO = 20190030
-var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
+var studentNO = students_in_departNM.filter(students_in_departNM("GCI_STD_NO").equalTo(s"${std_NO}"))
 
 //--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명-------------------------
-var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO"), col("SBJT_KOR_NM")).distinct.toDF
+// var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO"), col("SBJT_KOR_NM")).distinct.toDF
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"),col("SBJT_KEY_CD")).distinct.toDF
+var clPassUri_DF_temp = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo("201822730"))
+
 
 //컴퓨터공학과에서 개설된 교과목 데이터프레임
 var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
@@ -94,12 +102,9 @@ var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
 // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
 
-//광홍과 학번을 돌면서
-
-
 
 var activity_List_byStd = List[Any]()
-
+//광홍과 학번을 돌면서
 stdNO_in_departNM.foreach{ stdNO =>
   var depart_activity_temp = List[Any]()
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
@@ -241,6 +246,9 @@ var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"$
 //학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
 var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
+
+
+//---------------------------<학생 한명의 비교과중분류 별 별점평균 데이터프레임 생성>----------------------------------------
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
 var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 var key_id_List_byStd = key_id_temp.rdd.map(r=>r(0)).collect.toList
@@ -267,6 +275,14 @@ val schema3 = StructType(
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
 var star_subcd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema3)
 
+val schema4 = StructType(
+    StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
+var subcd_byStd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema4)
+
+val schema5 = StructType(
+    StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
+var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
+
 
 // 학생 한 명이 수행한 비교과 프로그램 keyid
 key_id_List_byStd.foreach{ keyid =>
@@ -280,17 +296,76 @@ key_id_List_byStd.foreach{ keyid =>
   // 빈 dataframe에 foreach를 돌면서 값 추가
   star_keyid_DF = star_keyid_DF.union(star_keyid_DF_temp)
   subcd_keyid_DF = subcd_keyid_DF.union(subcd_keyid_DF_temp)
+
+  //-----------------------------------------------------------------------
+  // 학과 중분류 dataframe 만들기
+  var subcd_byStd_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+  subcd_byStd_DF = subcd_byStd_DF.union(subcd_byStd_DF_temp)
 }
+
+
+
 
 // 별점-프로그램id dataframe과 중분류-프로그램id dataframe를 프로그램id에 따라 중복 제거
 star_keyid_DF = star_keyid_DF.dropDuplicates("STAR_KEY_ID")
 subcd_keyid_DF = subcd_keyid_DF.dropDuplicates("NPI_KEY_ID")
-
-star_keyid_DF.show
-subcd_keyid_DF.show
 
 // 별점-프로그램id dataframe과 중분류-프로그램id dataframe join
 var star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") === col("NPI_KEY_ID"), "inner")
 var star_subcd_DF = star_subcd_DF_temp.drop("STAR_KEY_ID", "NPI_KEY_ID")
 
 var star_subcd_avg_DF = star_subcd_DF.groupBy("NPI_AREA_SUB_CD").agg(avg("STAR_POINT"))
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+
+
+//-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
+var departNM = "컴퓨터공학과"
+var std_NO1 = 20190030
+// 추가학생
+var std_NO2 = 20142820
+var std_NO3 = 20142932
+
+var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
+var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+//map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
+
+//광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
+var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+
+
+import org.apache.spark.sql.types.{
+    StructType, StructField, StringType, IntegerType}
+import org.apache.spark.sql.Row
+
+val schema4 = StructType(
+    StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
+var subcd_byStd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema4)
+
+val schema5 = StructType(
+    StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
+var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
+
+
+stdNO_in_departNM.foreach{ stdNO =>
+  println("stdNO : " + stdNO)
+  // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
+  var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
+  var key_id_List_byStd = key_id_temp.rdd.map(r=>r(0)).collect.toList
+
+  // 학생 한 명이 수행한 비교과 프로그램 keyid
+  key_id_List_byStd.foreach{ keyid =>
+    //비교과 id 로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블) (dataframe)
+    var subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+
+    subcd_byStd_DF = subcd_byStd_DF.union(subcd_keyid_DF_temp)
+  }
+
+  subcd_byStd_DF.show
+
+ // subcd_byDepart_DF = subcd_byDepart_DF.union(subcd_byStd_DF)
+}
+subcd_byDepart_DF.show
+//----------------------------------------------------------------------------------------------------------------------------
