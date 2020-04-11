@@ -246,12 +246,7 @@ var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri
 var key_id_List_byStd = key_id_temp.rdd.map(r=>r(0)).collect.toList
 
 
-
-var sub_cd_List = List[Any]()
-var sub_star_List = List[Any]()
-var ncr_List = List[Any]()
-var ncr_List_temp = List[Any]()
-
+//학생 한명에 대한 중분류별 별점 평균 리스트 만들기 (star_subcd_avg_DF를 list로 변환)
 
 import org.apache.spark.sql.types.{
     StructType, StructField, StringType, IntegerType}
@@ -262,12 +257,10 @@ val schema1 = StructType(
     StructField("STAR_KEY_ID", StringType, true) :: Nil)
 var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
 
-
 val schema2 = StructType(
     StructField("NPI_AREA_SUB_CD", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
 var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
-
 
 val schema3 = StructType(
     StructField("STAR_POINT", StringType, true) ::
@@ -275,59 +268,29 @@ val schema3 = StructType(
 var star_subcd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema3)
 
 
-
-// 비교과 활동 KEY_ID를 비교과 테이블에서 찾음 => 그 KEY_ID를 검색해 중분류를 가져옴
-
-
-// 비교과활동 KEY_ID 하나에 따른 별점
-// var star_point_list_temp = getStar_by_stdNO.select(col("STAR_POINT")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo("NCR000000000694"))
-
-// var tmp = List[Any]()
 // 학생 한 명이 수행한 비교과 프로그램 keyid
 key_id_List_byStd.foreach{ keyid =>
 
   //비교과 id 로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블) (dataframe)
-  var sub_cd_List_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
-  // sub_cd_List_temp.show
-
-  // 중분류 dataframe을 list로 변환
-  // var sub_cd_List_temp2 = sub_cd_List_temp.rdd.map(r=>r(0)).collect.toList
-  //
-  // ncr_List_temp = sub_cd_List_temp.collect.toList.map(_.toSeq)
-  //
-  // ncr_List = ncr_List ++ sub_cd_List_temp.collect.toList.map(_.toSeq)
-
-  // ncr_List = ncr_List ++ sub_cd_List_temp2
-
-  // 중분류 code list 생성
-  // sub_cd_List = sub_cd_List ++ sub_cd_List_temp2
+  var subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
 
   // 비교과 활동에 대한 별점을 가져옴
-  var star_point_List_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
-  // star_point_List_temp.show
-  // var star_point_List_temp2 = star_point_List_temp.rdd.map(r=>r(0)).collect.toList
+  var star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
 
-  star_keyid_DF = star_keyid_DF.union(star_point_List_temp)
-
-  subcd_keyid_DF = subcd_keyid_DF.union(sub_cd_List_temp)
+  // 빈 dataframe에 foreach를 돌면서 값 추가
+  star_keyid_DF = star_keyid_DF.union(star_keyid_DF_temp)
+  subcd_keyid_DF = subcd_keyid_DF.union(subcd_keyid_DF_temp)
 }
 
-// df.dropDuplicates("timestamp")
-
+// 별점-프로그램id dataframe과 중분류-프로그램id dataframe를 프로그램id에 따라 중복 제거
 star_keyid_DF = star_keyid_DF.dropDuplicates("STAR_KEY_ID")
 subcd_keyid_DF = subcd_keyid_DF.dropDuplicates("NPI_KEY_ID")
 
 star_keyid_DF.show
 subcd_keyid_DF.show
 
-
+// 별점-프로그램id dataframe과 중분류-프로그램id dataframe join
 var star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") === col("NPI_KEY_ID"), "inner")
 var star_subcd_DF = star_subcd_DF_temp.drop("STAR_KEY_ID", "NPI_KEY_ID")
-//학과 별 학생들이 수강한 비교과의 중분류 list 로 포맷 잡고 : 학과 - 학번 돌면서 list 만들고 , 중분류로 바꿔주기
-//학생 한명이 수강한 비교과 list -> 별점 가져오기(from. 교과/비교과 별점 테이블) -> 중분류 가져오기 -> 중분류 별 별점 avg 계산
 
 var star_subcd_avg_DF = star_subcd_DF.groupBy("NPI_AREA_SUB_CD").agg(avg("STAR_POINT"))
-
-
-
-// 재용오빠가 mongodb에서 중복데이터 제거하는 코드짠 뒤 다시 테스트
