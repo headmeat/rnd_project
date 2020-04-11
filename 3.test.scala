@@ -368,4 +368,15 @@ stdNO_in_departNM.foreach{ stdNO =>
  // subcd_byDepart_DF = subcd_byDepart_DF.union(subcd_byStd_DF)
 }
 subcd_byDepart_DF.show
+
+
+
+
+
+
+
+
 //----------------------------------------------------------------------------------------------------------------------------
+
+//최종적으로 생성한 학생 별 교과, 비교과, 자율활동 리스트에 대한 dataframe을 DB에 저장
+setMongoDF(spark, dataframe명)
