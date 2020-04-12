@@ -348,13 +348,22 @@ val schema5 = StructType(
     StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
 var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
 
+val stdMap = collection.mutable.Map[String, List[Any]]()
 
 stdNO_in_departNM.foreach{ stdNO =>
-  println("stdNO : " + stdNO)
+  //println("stdNO : " + stdNO)
   // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
   var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
-  var key_id_List_byStd = key_id_temp.rdd.map(r=>r(0)).collect.toList
+  var key_id_List_byStd = key_id_temp.rdd.map{r=> r(0)}.collect.toList
 
+  val size = key_id_List_byStd.size
+
+  if(size > 0) {
+    val record = (s"${stdNO}", key_id_List_byStd)
+    println(s"this --> $record")
+    stdMap+=(record)
+  }
+/*
   // 학생 한 명이 수행한 비교과 프로그램 keyid
   key_id_List_byStd.foreach{ keyid =>
     //비교과 id 로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블) (dataframe)
@@ -362,9 +371,8 @@ stdNO_in_departNM.foreach{ stdNO =>
 
     subcd_byStd_DF = subcd_byStd_DF.union(subcd_keyid_DF_temp)
   }
-
   subcd_byStd_DF.show
-
+*/
  // subcd_byDepart_DF = subcd_byDepart_DF.union(subcd_byStd_DF)
 }
 subcd_byDepart_DF.show
