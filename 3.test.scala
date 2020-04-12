@@ -348,7 +348,8 @@ val schema5 = StructType(
     StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
 var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
 
-val stdMap = collection.mutable.Map[String, List[Any]]()
+case class starPoint(id:String, point:Double)
+val stdMap = collection.mutable.Map[String, Array[starPoint]]()
 
 stdNO_in_departNM.foreach{ stdNO =>
   //println("stdNO : " + stdNO)
@@ -359,10 +360,44 @@ stdNO_in_departNM.foreach{ stdNO =>
   val size = key_id_List_byStd.size
 
   if(size > 0) {
-    val record = (s"${stdNO}", key_id_List_byStd)
+    key_id_List_byStd.foreach{ keyid =>
+      //비교과 id 로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블) (dataframe)
+      var subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+
+      // 비교과 활동에 대한 별점을 가져옴
+      var star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
+
+      // 빈 dataframe에 foreach를 돌면서 값 추가
+      star_keyid_DF = star_keyid_DF.union(star_keyid_DF_temp)
+      subcd_keyid_DF = subcd_keyid_DF.union(subcd_keyid_DF_temp)
+
+      //-----------------------------------------------------------------------
+      // 학과 중분류 dataframe 만들기
+      var subcd_byStd_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+      subcd_byStd_DF = subcd_byStd_DF.union(subcd_byStd_DF_temp)
+    }
+
+    // 별점-프로그램id dataframe과 중분류-프로그램id dataframe를 프로그램id에 따라 중복 제거
+    star_keyid_DF = star_keyid_DF.dropDuplicates("STAR_KEY_ID")
+    subcd_keyid_DF = subcd_keyid_DF.dropDuplicates("NPI_KEY_ID")
+    // 별점-프로그램id dataframe과 중분류-프로그램id dataframe join
+    var star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") === col("NPI_KEY_ID"), "inner")
+    var star_subcd_DF = star_subcd_DF_temp.drop("STAR_KEY_ID", "NPI_KEY_ID")
+    var star_subcd_avg_DF = star_subcd_DF.groupBy("NPI_AREA_SUB_CD").agg(avg("STAR_POINT"))
+
+    val t1 = star_subcd_avg_DF.collect.map{ row =>
+      val str = row.toString
+      val size = str.length
+      val res = str.substring(1, size-1).split(",")
+      val starP = starPoint(res(0), res(1).toDouble)
+      starP
+    }
+    val record = (stdNO.toString, t1)
     println(s"this --> $record")
     stdMap+=(record)
   }
+}
+
 /*
   // 학생 한 명이 수행한 비교과 프로그램 keyid
   key_id_List_byStd.foreach{ keyid =>
@@ -374,6 +409,6 @@ stdNO_in_departNM.foreach{ stdNO =>
   subcd_byStd_DF.show
 */
  // subcd_byDepart_DF = subcd_byDepart_DF.union(subcd_byStd_DF)
-}
+
 subcd_byDepart_DF.show
 //----------------------------------------------------------------------------------------------------------------------------
