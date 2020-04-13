@@ -316,7 +316,7 @@ case class starPoint(subcd:String, starpoint:Double)
 // String : 학번, Array : (중분류, 별점)
 val subcd_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
 val subcd_byDepart_Map_temp = collection.mutable.Map[String, Array[String]]()
-val subcd_byDepart_List1 = List[Any]()
+var subcd_byDepart_List1 = List[Any]()
 
 stdNO_in_departNM.foreach{ stdNO =>
   //println("stdNO : " + stdNO)
@@ -397,7 +397,7 @@ stdNO_in_departNM.foreach{ stdNO =>
     val t1 = subcd_byDepart_Map_temp.map(x => x._2)
     println(t1)
 
-    subcd_byDepart_List1 = t1.map(x => x.mkString(" "))
+    subcd_byDepart_List1 = t1.map(x => x.mkString(" ")).toList
     // println("####################################################" + t2)
     // subcd_byDepart_List = subcd_byDepart_List ++ t2
     // println("-----------------map_temp----------------------: " + s"\n${t1.map(x => x.mkString(" "))}")
