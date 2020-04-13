@@ -20,6 +20,12 @@ import org.apache.log4j.Level
 // val base ="mongodb://127.0.0.1/cpmongo."
 
 val base ="mongodb://127.0.0.1/cpmongo_distinct."
+val output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
+val SREG_output_base = "mongodb://127.0.0.1/cpmongo_distinct.SREG_SIM"
+val NCR_output_base = "mongodb://127.0.0.1/cpmongo_distinct.NCR_SIM"
+val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
+//교과: SREG_SIM, 비교과: NCR_SIM, 자율활동: ACTIVITY_SIM
+
 
 val replyUri = "CPS_BOARD_REPLY"  //댓글
 val codeUri = "CPS_CODE_MNG"  //통합 코드관리 테이블
@@ -38,17 +44,12 @@ val pfInfoUri = "V_STD_CDP_STAF"  //교수 정보 (professor info)
 val clInfoUri = "V_STD_CDP_SUBJECT"  //교과 정보 (class info)
 
 val cpsStarUri = "CPS_STAR_POINT"  //교과/비교과용 별점 테이블
+val userSimilarityUri = "USER_SIMILARITY" //유사도 분석 팀이 생성한 테이블
 
 Logger.getLogger("org").setLevel(Level.OFF)
 Logger.getLogger("akka").setLevel(Level.OFF)
 Logger.getLogger("MongoRelation").setLevel(Level.OFF)
 Logger.getLogger("MongoClientCache").setLevel(Level.OFF)
-// Logger.getRootLogger("org.mongodb.driver.connection").setLevel(org.apache.log4j.Level.OFF)
-// Logger.getRootLogger("org.mongodb.driver.management").setLevel(org.apache.log4j.Level.OFF)
-// Logger.getRootLogger("org.mongodb.driver.cluster").setLevel(org.apache.log4j.Level.OFF)
-// Logger.getRootLogger("org.mongodb.driver.protocol.insert").setLevel(org.apache.log4j.Level.OFF)
-// Logger.getRootLogger("org.mongodb.driver.protocol.query").setLevel(org.apache.log4j.Level.OFF)
-// Logger.getRootLogger("org.mongodb.driver.protocol.update").setLevel(org.apache.log4j.Level.OFF)
 
 def getMongoDF(
  spark : SparkSession,
@@ -56,12 +57,26 @@ def getMongoDF(
    spark.read.mongo(ReadConfig(Map("uri"->(base+coll))))
 }
 
+//새로 수정(연희 수정)
 def setMongoDF(
 spark : SparkSession,
-coll: String,
 df : DataFrame ) = {
-df.saveToMongoDB(WriteConfig(Map("uri"->(base+coll))))
+df.saveToMongoDB(WriteConfig(Map("uri"->(output_base))))
 }
+
+//setMongoDF(spark, dataframe명)
+
+
+//예전꺼
+// def setMongoDF(
+// spark : SparkSession,
+// coll: String,
+// df : DataFrame ) = {
+// df.saveToMongoDB(WriteConfig(Map("uri"->(base+coll))))
+// }
+
+
+
 
 
 val replyUri_table = getMongoDF(spark, replyUri)  //댓글
@@ -81,3 +96,4 @@ val pfInfoUri_table =  getMongoDF(spark, pfInfoUri)  //교수 정보 (professor 
 val clInfoUri_table =  getMongoDF(spark, clInfoUri)  //교과 정보 (class info)
 
 val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별점 테이블
+val userSimilarity_table = getMongoDF(spark, userSimilarityUri) //유사도 분석 팀이 생성한 테이블
