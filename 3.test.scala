@@ -275,13 +275,13 @@ val schema3 = StructType(
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
 var star_subcd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema3)
 
-val schema4 = StructType(
-    StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
-var subcd_byStd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema4)
-
-val schema5 = StructType(
-    StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
-var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
+// val schema4 = StructType(
+//     StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
+// var subcd_byStd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema4)
+//
+// val schema5 = StructType(
+//     StructField("NPI_AREA_SUB_CD", StringType, true) :: Nil)
+// var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
 //
 //
 // // 학생 한 명이 수행한 비교과 프로그램 keyid
@@ -349,10 +349,14 @@ val schema5 = StructType(
 var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
 
 case class starPoint(subcd:String, starpoint:Double)
+case class subcd(subcd:String)
 
 // Map 타입의 변수 (string, Array)를 인자로 받음
 // String : 학번, Array : (중분류, 별점)
 val subcd_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
+val subcd_byDepart_Map_temp = collection.mutable.Map[String, Array[subcd]]()
+val subcd_byDepart_Map = collection.mutable.Map[String, Array[subcd]]()
+var map_temp = collection.mutable.Map[String, Array[subcd]]()
 
 stdNO_in_departNM.foreach{ stdNO =>
   //println("stdNO : " + stdNO)
@@ -388,9 +392,10 @@ stdNO_in_departNM.foreach{ stdNO =>
     var star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") === col("NPI_KEY_ID"), "inner")
     var star_subcd_DF = star_subcd_DF_temp.drop("STAR_KEY_ID", "NPI_KEY_ID")
     var star_subcd_avg_DF = star_subcd_DF.groupBy("NPI_AREA_SUB_CD").agg(avg("STAR_POINT"))
+    var subcd_byStd_DF2 = star_subcd_DF.drop("STAR_POINT")
 
     //학생 한명의 중분류별 별점 평균 dataframe을 Map으로 변환
-    val t1 = star_subcd_avg_DF.collect.map{ row =>
+    val subcd_star_temp = star_subcd_avg_DF.collect.map{ row =>
       // 중분류
       val str = row.toString
       // [NCR_T01_P04_C03,3.8] 값의 길이 = 21
@@ -402,12 +407,60 @@ stdNO_in_departNM.foreach{ stdNO =>
       starP
     }
 
-    // key : 학번, value : t1(중분류, 별점)
-    val record = (stdNO.toString, t1)
-    println(s"this --> $record")
-    subcd_star_byStd_Map+=(record)
+    // key : 학번, value : subcd_star_temp(중분류, 별점)
+    val subcd_star_record = (stdNO.toString, subcd_star_temp)
+    println(s"this --> $subcd_star_record")
+    subcd_star_byStd_Map+=(subcd_star_record)
+
+    var subcd_byDepart_temp = subcd_byStd_DF2.collect.map{ row =>
+      println(row)
+
+      val str = row.toString
+      // [NCR_T01_P04_C03,3.8] 값의 길이 = 21
+      val size = str.length
+      // [] 제거
+      val res = str.substring(1, size-1).split(",")
+      // res(0) : 중분류, res(1) : starpoint
+      val sub = subcd(res(0))
+      sub
+    }
+
+    var departNM = "컴퓨터공학과"
+
+    val subcd_record_byDepart = (s"$stdNO", subcd_byDepart_temp)
+    println(s"this --> $subcd_record_byDepart")
+
+    // subcd_byDepart_Map += (subcd_record_byDepart.get(s"$departNM").get)
+    subcd_byDepart_Map_temp += subcd_record_byDepart
   }
+  subcd_byDepart_Map_temp(s"$stdNO")
+  // map_temp += subcd_byDepart_Map_temp(s"$stdNO")
+
+  // subcd_byDepart_Map
+
+  // var subcd_byDepart_temp = subcd_byStd_DF2.collect.map{ row =>
+  //   println(row)
+  //
+  //   val str = row.toString
+  //   // [NCR_T01_P04_C03,3.8] 값의 길이 = 21
+  //   val size = str.length
+  //   // [] 제거
+  //   val res = str.substring(1, size-1).split(",")
+  //   // res(0) : 중분류, res(1) : starpoint
+  //   val sub = subcd(res(0))
+  //   sub
+  // }
+  //
+  // var departNM = "컴퓨터공학과"
+  //
+  // val subcd_record_byDepart = (s"$departNM", subcd_byDepart_temp)
+  // println(s"this --> $subcd_record_byDepart")
+  //
+  // // subcd_byDepart_Map += (subcd_record_byDepart.get(s"$departNM").get)
+  // subcd_byDepart_Map += subcd_record_byDepart
 }
+map_temp
+
 
 // Map 타입 변수에 key로 value 가져오기 ("20142820"의 (중분류, 별점) 값을 가져옴)
 // subcd_star_byStd_Map.get("20142820").get
