@@ -43,6 +43,12 @@ Logger.getLogger("org").setLevel(Level.OFF)
 Logger.getLogger("akka").setLevel(Level.OFF)
 Logger.getLogger("MongoRelation").setLevel(Level.OFF)
 Logger.getLogger("MongoClientCache").setLevel(Level.OFF)
+// Logger.getRootLogger("org.mongodb.driver.connection").setLevel(org.apache.log4j.Level.OFF)
+// Logger.getRootLogger("org.mongodb.driver.management").setLevel(org.apache.log4j.Level.OFF)
+// Logger.getRootLogger("org.mongodb.driver.cluster").setLevel(org.apache.log4j.Level.OFF)
+// Logger.getRootLogger("org.mongodb.driver.protocol.insert").setLevel(org.apache.log4j.Level.OFF)
+// Logger.getRootLogger("org.mongodb.driver.protocol.query").setLevel(org.apache.log4j.Level.OFF)
+// Logger.getRootLogger("org.mongodb.driver.protocol.update").setLevel(org.apache.log4j.Level.OFF)
 
 def getMongoDF(
  spark : SparkSession,

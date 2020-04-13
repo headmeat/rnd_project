@@ -211,12 +211,12 @@ stdNO_in_departNM.foreach{ stdNO =>
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 var get_NPI_KEY_ID = ncrInfoUri_DF.select(col("NPI_KEY_ID"),col("NPI_AREA_SUB_CD"))
 //<학생 DataFrame> / 하나의 학과의 학생 => 지금 컴퓨터공학과 학생을 조회했으니까 컴퓨터공학과 학번을 조회해서 별점 테이블에 데이터를 삽입해줌
-var departNM = "컴퓨터공학과"
+// var departNM = "컴퓨터공학과"
 //from. 교과 수료 테이블 : departNM에 담긴 학과의 학생들의 학번을 가져옴
 var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 students_in_departNM.show
 // ---------------------------------------------------------------------------
-// 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932| |20152611| |20152615|
+// 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932|   |20152611| |20152615|
 // ---------------------------------------------------------------------------
 
 
@@ -232,9 +232,15 @@ var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")
 
 var departNM = "컴퓨터공학과"
 var std_NO1 = 20190030
-var std_NO2 = 20142820
+var std_NO2 = 20142820 // 6개
+// 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000679, NCR000000000731, NCR000000000671, NCR000000000780
+// 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P03_C03, NCR_T01_P04_C03, NCR_T01_P02_C03, NCR_T01_P02_C03
 var std_NO3 = 20142932
+// 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000731, NCR000000000737, NCR000000000743
+// 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03
 
+// 학과별 중분류 code (distinct)
+// NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P03_C03, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03, NCR_T01_P02_C03,
 
 // from. 교과목수료 테이블 : 학과명, 학번 => 질의를 내린 학생의 학과를 찾기 위해 사용
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
@@ -283,11 +289,11 @@ var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
 //----------------------------------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
-var departNM = "컴퓨터공학과"
-var std_NO1 = 20190030
-// 추가학생
-var std_NO2 = 20142820
-var std_NO3 = 20142932
+// var departNM = "컴퓨터공학과"
+// var std_NO1 = 20190030
+// // 추가학생
+// var std_NO2 = 20142820
+// var std_NO3 = 20142932
 
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
@@ -387,19 +393,15 @@ stdNO_in_departNM.foreach{ stdNO =>
       res(0)
     }.distinct.sortBy(x => x)
 
-    var departNM = "컴퓨터공학과"
-
     val subcd_record_byDepart = (s"$stdNO", subcd_byDepart_temp)
-    println(s"this --> $subcd_record_byDepart")
+    // println(s"this --> $subcd_record_byDepart")
 
     // subcd_byDepart_Map += (subcd_record_byDepart.get(s"$departNM").get)
     subcd_byDepart_Map_temp += subcd_record_byDepart
     val t1 = subcd_byDepart_Map_temp.map(x => x._2)
 
-
     // println("-----------------stdNO----------: " + s"${stdNO}")
     // subcd_byDepart_Map_temp(s"${stdNO}")
-
 
     // val subcd_star_temp = star_subcd_avg_DF.collect.map{ row =>
     //   // 중분류
@@ -413,13 +415,11 @@ stdNO_in_departNM.foreach{ stdNO =>
     //   starP
     // }
 
-
-
     //map_temp += subcd_byDepart_Map_temp(t2)
 
-
     t1.foreach(x => println(s"size : ${x.length}"))
-    println("-----------------map_temp----------------------: " + s"\n${t1.map(x => x.mkString(" "))}")
+    println(t1)
+    // println("-----------------map_temp----------------------: " + s"\n${t1.map(x => x.mkString(" "))}")
   }
 }
   // map_temp += subcd_byDepart_Map_temp(s"$stdNO")
@@ -447,7 +447,6 @@ stdNO_in_departNM.foreach{ stdNO =>
   //
   // // subcd_byDepart_Map += (subcd_record_byDepart.get(s"$departNM").get)
   // subcd_byDepart_Map += subcd_record_byDepart
-}
-map_temp
+
 
 //----------------------------------------------------------------------------------------------------------------------------
