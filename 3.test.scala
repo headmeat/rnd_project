@@ -230,12 +230,16 @@ var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")
 
 var departNM = "컴퓨터공학과"
 var std_NO1 = 20190030
+
 var std_NO2 = 20142820 // 6개
 // 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000679, NCR000000000731, NCR000000000671, NCR000000000780
 // 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P03_C03, NCR_T01_P04_C03, NCR_T01_P02_C03, NCR_T01_P02_C03
-var std_NO3 = 20142932
+var std_NO3 = 20142932 // 5게
 // 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000731, NCR000000000737, NCR000000000743
 // 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03
+var std_NO4 = 20152611 // 5개
+// 프로그램 id : NCR000000000737, NCR000000000743, NCR000000000748, NCR000000000723, NCR000000000716
+
 
 // 학과별 중분류 code (distinct)
 // NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P03_C03, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03, NCR_T01_P02_C03,
@@ -252,7 +256,6 @@ var std_NO3 = 20142932
 //      NCR_T01_P01_C01 NCR_T01_P02_C03 NCR_T01_P02_C03 NCR_T01_P03_C01 NCR_T01_P03_C03 NCR_T01_P04_C03,
 //      NCR_T01_P01_C01 NCR_T01_P02_C03 NCR_T01_P02_C03 NCR_T01_P03_C01 NCR_T01_P03_C03 NCR_T01_P04_C03)
 
-
 // from. 교과목수료 테이블 : 학과명, 학번 => 질의를 내린 학생의 학과를 찾기 위해 사용
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 
@@ -266,7 +269,6 @@ var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
 // var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 // var key_id_List_byStd = key_id_temp.rdd.map(r=>r(0)).collect.toList
-
 
 //학생 한명에 대한 중분류별 별점 평균 리스트 만들기 (star_subcd_avg_DF를 list로 변환)
 
@@ -314,7 +316,7 @@ case class starPoint(subcd:String, starpoint:Double)
 // String : 학번, Array : (중분류, 별점)
 val subcd_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
 val subcd_byDepart_Map_temp = collection.mutable.Map[String, Array[String]]()
-val subcd_byDepart_List = List[Any]()
+val subcd_byDepart_List1 = List[Any]()
 
 stdNO_in_departNM.foreach{ stdNO =>
   //println("stdNO : " + stdNO)
@@ -324,6 +326,12 @@ stdNO_in_departNM.foreach{ stdNO =>
 
   // 학생이 수강한 비교과 프로그램 id
   val size = key_id_List_byStd.size
+  //
+  // 디버깅 ,,
+  // if(size>0){
+  //   println(s"stdNO ======================> + ${stdNO}")
+  //   println(s"key_id_List_byStd ======================> + ${key_id_List_byStd}")
+  // }
 
   if(size > 0) {
     key_id_List_byStd.foreach{ keyid =>
@@ -370,8 +378,6 @@ stdNO_in_departNM.foreach{ stdNO =>
     // println(s"this --> $subcd_star_record")
     subcd_star_byStd_Map+=(subcd_star_record)
 
-
-
     var subcd_byDepart_temp = subcd_byStd_DF2.collect.map{ row =>
       // println(row)
       val str = row.toString
@@ -389,14 +395,17 @@ stdNO_in_departNM.foreach{ stdNO =>
     // subcd_byDepart_Map += (subcd_record_byDepart.get(s"$departNM").get)
     subcd_byDepart_Map_temp += subcd_record_byDepart
     val t1 = subcd_byDepart_Map_temp.map(x => x._2)
+    println(t1)
 
-    var t2 = t1.map(x => x.mkString(" ")).toList
-    println("####################################################" + t2)
+    subcd_byDepart_List1 = t1.map(x => x.mkString(" "))
+    // println("####################################################" + t2)
     // subcd_byDepart_List = subcd_byDepart_List ++ t2
     // println("-----------------map_temp----------------------: " + s"\n${t1.map(x => x.mkString(" "))}")
   }
 }
-subcd_byDepart_List
+println(subcd_byDepart_List1)
 
+subcd_byDepart_List = subcd_byDepart_List.distinct
 
+println(subcd_byDepart_List)
 //----------------------------------------------------------------------------------------------------------------------------
