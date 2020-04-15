@@ -37,7 +37,7 @@ val jobInfoUri = "CPS_SCHOOL_EMPLOY_INFO"  //채용정보-관리자 등록
 val sjobInfoUri = "CPS_SCHOOL_EMPLOY_STD_INFO"  //채용정보 신청 학생 정보(student job info)
 
 
-val deptInfoUri = "V_STD_CDP_DEPT"  //학과 정보 (department info)
+val deptInfoUri = "V_STD_CDP_DEPTQ"  //학과 정보 (department info)
 val clPassUri = "V_STD_CDP_PASSCURI" //교과목 수료(class pass)
 val stInfoUri = "V_STD_CDP_SREG"  //학생 정보 (student info)
 val pfInfoUri = "V_STD_CDP_STAF"  //교수 정보 (professor info)
@@ -50,6 +50,11 @@ Logger.getLogger("org").setLevel(Level.OFF)
 Logger.getLogger("akka").setLevel(Level.OFF)
 Logger.getLogger("MongoRelation").setLevel(Level.OFF)
 Logger.getLogger("MongoClientCache").setLevel(Level.OFF)
+
+
+Logger.getRootLogger().setLevel(Level.ERROR)
+// Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+// Logger.getLogger("org.spark-project").setLevel(Level.WARN)
 
 def getMongoDF(
  spark : SparkSession,
