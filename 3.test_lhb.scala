@@ -27,8 +27,8 @@ var std_NO = 20190030
 var studentNO = students_in_departNM.filter(students_in_departNM("GCI_STD_NO").equalTo(s"${std_NO}"))
 
 //--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명-------------------------
-// var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO"), col("SBJT_KOR_NM")).distinct.toDF
-var clPassUri_DF = clPassUri_table.select(col("STD_NO"),col("SBJT_KEY_CD")).distinct.toDF
+var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO"), col("SBJT_KOR_NM")).distinct.toDF
+// var clPassUri_DF = clPassUri_table.select(col("STD_NO"),col("SBJT_KEY_CD")).distinct.toDF
 var clPassUri_DF_temp = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo("201822730"))
 
 
@@ -260,11 +260,11 @@ var std_NO4 = 20152611 // 5개
 //   NCR_T01_P01_C01 NCR_T01_P02_C03 NCR_T01_P02_C03 NCR_T01_P03_C01 NCR_T01_P03_C03 NCR_T01_P04_C03)
 
 
-List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
-  NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03,
-  NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03)
-List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
-  NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03)
+// List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
+//   NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03,
+//   NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03)
+// List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
+//   NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03)
 
 
 // from. 교과목수료 테이블 : 학과명, 학번 => 질의를 내린 학생의 학과를 찾기 위해 사용
@@ -406,7 +406,12 @@ arr01.foreach{ stdNO =>
 subcd_byDepart_List = t1
 } //학번 루프 끝
 
+
 // 학과의 중분류 List
+// Map(20142932 -> Array(starPoint(NCR_T01_P01_C03,null), starPoint(NCR_T01_P05_C02,null), starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)),
+// 20152611 -> Array(starPoint(NCR_T01_P01_C03,null), starPoint(NCR_T01_P05_C02,null), starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P04_C07,null), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)),
+// 20142820 -> Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)))
+
 println(subcd_byDepart_List)
 
 // 학과의 모든 학번의 (중분류, 별점) Map
@@ -417,3 +422,58 @@ subcd_star_byStd_Map
 
 
 //----------------------------------------------------------------------------------------------------------------------------
+
+val arr01 = Array(20142820, 20142932, 20152611)
+
+subcd_star_byStd_Map("20142932")(0).subcd
+subcd_star_byStd_Map("20142932")(0).starpoint
+var sub_cd = List[Any]()
+var star_point = List[Any]()
+var star_point_list = List[Any]()
+/*
+arr01.foreach{ stdNO =>
+
+}*/
+
+for(i <- 0 until arr01.size){
+  for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
+    // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
+
+    star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
+
+    // sub_cd.flatMap(x => Some(x))
+    // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
+    // star_point.flatMap(x => Some(x))
+  }
+  // star_point_list =
+}
+
+
+
+for(i <- 0 until arr01.size){
+    sub_cd = sub_cd ++ subcd_star_byStd_Map(arr01(i).toString)(i).subcd
+    sub_cd.flatMap(x => Some(x))
+    star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(i).starpoint
+    star_point.flatMap(x => Some(x))
+}
+
+var star_point = List[Any]()
+
+subcd_byDepart_List.foreach { subcd =>
+  for(i <- 0 until arr01.size){
+    var temp = subcd_star_byStd_Map(arr01(i).toString)(i).subcd
+    println(temp)
+    // for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
+    //   // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
+    //
+    //   // star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
+    //   // for()
+    //
+    //
+    //   // sub_cd.flatMap(x => Some(x))
+    //   // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
+    //   // star_point.flatMap(x => Some(x))
+    // }
+    // star_point_list =
+  }
+}
