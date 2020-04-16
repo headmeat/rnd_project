@@ -15,67 +15,128 @@ var departNM = "컴퓨터공학과"
 var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 students_in_departNM.show
 
+
+
  // 201028406
  // 201028409
  // 201028407
  // 201028410
  // 201028411
-
+//-------------------------------------------------아 뒤지고싶다,, 다시 해보자,,,,,,,,, ㅎㅎ
 //studentDF_test 중 한명의 학번
-//컴퓨터공학과 학생
+//컴퓨터공학과 학생으로 테스트함
+// 1. 학생이 질의 -> 학번으로 질의함
+// 2-1. 학번으로 그 학생이 무슨 과인지 질의 => 질의 한 후 String으로 학과를 저장함
+// 2-2. 학번의로 그 과의 소속 학생들을 리스트로 저장
+// 3-1 학과 이름으로 과에 있는 학생들이 수강한 교과목을 리스트로 저장
+// 3-2 학과 이름으로 과에서 개설된 교과목을 리스트로 저장
+
+// 1.
 var std_NO = 20190030
-var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
+// 컴공과 데이터 목록 |20142820||20142932| |20152611| |20152615| 5명으로 하자 . .
+//--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명, 교과목코드-------------------------
+// var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
 
-//--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명-------------------------
-var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO"), col("SBJT_KOR_NM")).distinct.toDF
-// var clPassUri_DF = clPassUri_table.select(col("STD_NO"),col("SBJT_KEY_CD")).distinct.toDF
-// var clPassUri_DF_temp = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo("201822730"))
+// 2-1. 학과
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
+
+// 2-2. 학과 학생 리스트
+var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+var stdNO_in_departNM_List = stdNO_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
+
+// 3-1. 학생의 수업 리스트
+var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KOR_NM"))
+var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
 
-//컴퓨터공학과에서 개설된 교과목 데이터프레임
-var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
-sbjtNM_in_departNM.show
+// 3-2. 학과의 수업 리스트
+// 컴퓨터공학과에서 개설된 수업명을 리스트로 생성 : 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
+var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KOR_NM")
+var sbjtNM_in_departNM_List = sbjtNM_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
 
-//@@@ 컴퓨터공학과에서 개설된 수업명을 리스트로 생성
-// var sbjtNM_List = sbjtNM_in_departNM.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList
-// 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
-var sbjtNM_List = sbjtNM_in_departNM.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
 
-//컴퓨터공학과 학생 학번을 가지고 그 사람이 수강한 교과목 리스트 생성
-//학과로 filter
-//학번으로 filter해서
-//수업명을 리스트로 생성
+// --------------------------------------------별점 추가하기---------------------------------------------
+// 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932| |20152611| |20152615|
+// 일단 지금은 이 학생들에 대핸 비교과 활동에 대한 별점을 추가했음
+// 이 학생들의 교과 리스트를 가져와서 (Key) 그 Key에 해당하는 별점을 mongodb에 추가해줌
 
-var departNM = "컴퓨터공학과"
-var std_NO = 20190030
-// 20142820 다른 학생
-//
-// //-----------------------------------------------학생 한명----------------------------------------------------
-// var student_have_sbjt_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
-// var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
-// var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
-//
-// //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
-// var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
-//
-// val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
-//   //x : record_1
-//   //0 : record_2
-//   //isListend면 1로 바뀜
-//   val name = record._1
-//   val isListened =
-//     if(student_have_sbjt_List.contains(name)) {
-//       1
-//     }
-//     else 0
-//   val isListened_List_temp2 = (name, isListened)
-//   print(isListened_List_temp2)
-//   //리턴하려면 이름을 쳐야 함
-//   //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
-//   isListened_List_temp2
-// }
-// val isListened_List = isListened_List_temp1.map(_._2)
-// //-----------------------------------------------=----------------------------------------------------------------
+
+
+// |20142820||20142932| |20152611| |20152615|
+var std_NO1 = 20142820
+var sbjtNM_by_stdNO1 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO1}")).select(col("SBJT_KOR_NM"))
+var sbjtNM_by_stdNO_List1 = sbjtNM_by_stdNO1.rdd.map(r=>r(0)).collect.toList.distinct
+// 네트워크프로그래밍, 시스템분석설계, 인공지능, 네트워크보안, 정보기술세미나, 서버구축및관리
+// AAM00351, AAM00341, AAM00361, AAM00331, AAM00371, AAM00121
+var sbjt1 = "서버구축및관리"
+var sbjt_key_cd1 = clPassUri_DF.filter(clPassUri_DF("SBJT_KOR_NM").equalTo(s"${sbjt1}")).select(col("SBJT_KEY_CD")).show
+
+
+
+var std_NO2 = 20142932
+var sbjtNM_by_stdNO2 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}")).select(col("SBJT_KOR_NM"))
+var sbjtNM_by_stdNO_List2 = sbjtNM_by_stdNO2.rdd.map(r=>r(0)).collect.toList.distinct
+// 시스템분석설계, 네트워크보안, 일본어회화Ⅰ, 네트워크프로그래밍, "MOSⅡ ", 인공지능, 정보기술세미나
+// AAM00341, AAM00331, TAA02231, AAM00351, TAA04151, AAM00361, AAM00371
+var sbjt2 = "정보기술세미나"
+var sbjt_key_cd2 = clPassUri_DF.filter(clPassUri_DF("SBJT_KOR_NM").equalTo(s"${sbjt2}")).select(col("SBJT_KEY_CD")).show
+
+
+var std_NO3 = 20152611
+var sbjtNM_by_stdNO3 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO3}")).select(col("SBJT_KOR_NM"))
+var sbjtNM_by_stdNO_List3 = sbjtNM_by_stdNO3.rdd.map(r=>r(0)).collect.toList.distinct
+// 컴퓨터구조, 취업연계현장실습Ⅰ, 인간중심감성공학의이해, 운영체제, 자바프로그래밍, 데이터베이스응용, 정보통신
+// AAM00231(AAM50171), COM00051, BCD00017,
+var sbjt3 = "인간중심감성공학의이해"
+var sbjt_key_cd3 = clPassUri_DF.filter(clPassUri_DF("SBJT_KOR_NM").equalTo(s"${sbjt3}")).select(col("SBJT_KEY_CD")).show
+
+
+
+
+var std_NO4 = 20152615
+var sbjtNM_by_stdNO4 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO4}")).select(col("SBJT_KOR_NM"))
+var sbjtNM_by_stdNO_List4 = sbjtNM_by_stdNO4.rdd.map(r=>r(0)).collect.toList.distinct
+// 자료구조, 서버구축및관리, 실용영어회화Ⅱ, 인터넷활용, 객체지향언어, 데이터베이스, 탁구
+var sbjt4 = "컴퓨터구조"
+var sbjt_key_cd3 = clPassUri_DF.filter(clPassUri_DF("SBJT_KOR_NM").equalTo(s"${sbjt4}")).select(col("SBJT_KEY_CD")).show
+
+
+
+
+
+
+
+
+
+
+//-----------------------------------------------학생 한명----------------------------------------------------
+var student_have_sbjt_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
+var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
+var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
+
+//@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
+var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
+
+val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+  //x : record_1
+  //0 : record_2
+  //isListend면 1로 바뀜
+  val name = record._1
+  val isListened =
+    if(student_have_sbjt_List.contains(name)) {
+      1
+    }
+    else 0
+  val isListened_List_temp2 = (name, isListened)
+  print(isListened_List_temp2)
+  //리턴하려면 이름을 쳐야 함
+  //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
+  isListened_List_temp2
+}
+val isListened_List = isListened_List_temp1.map(_._2)
+//-----------------------------------------------=----------------------------------------------------------------
 
 
 //==================================================일단 계산ㅇ ㅣ너무 느리니까 다른 방법으로,,=======================================
@@ -133,7 +194,8 @@ var df = tuples.toDF("STD_NO", "SUBJECT")
 //자격증(CD01) : 이름(OAM_TITLE) / ex. 토익800~900, FLEX 일본어 2A,  FLEX 일본어 1A,  FLEX 중국어 1A
 //어학(CD02) : 이름(OAM_TITLE)
 //봉사(CD03), 대외활동(CD04), 기관현장실습(CD05) : 활동구분코드(OAM_TYPE_CD)
-
+3 0 2
+0 5 3
 //학과 학생들 서치
 //학과df
 //for문으로 거기 있는 학번을 입력하고 자율활동내역을 긁어오고 -> 학생리스트
@@ -183,6 +245,7 @@ stdNO_in_departNM.foreach{ stdNO =>
   //이제 코드 3개에 대해 groupby와 agg 연산을 사용하여 코드 별로 count
   var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
   //------------------------------------------------------------------------------
+
 
   //---------------------자율활동 name list(자격증01, 어학02)----------------------
   //5개의 코드
@@ -242,54 +305,6 @@ stdNO_in_departNM.foreach{ stdNO =>
 
 
 
-
-//var star_point = List[Any]()
-var names = List[String]()
-var tuples = Seq[(Int, String)]()
-
-for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
-  var star_point = List[Any]() // 학번당 별점을 저장
-  var order = List[Int]() //
-  for(i<-0 until subcd_byDepart_List.size){ //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 셋팅
-    star_point = 0.0::star_point
-  }
-
-  // subcd_star_byStd_Map(arr01(0).toString)
-  // Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2))
-  // 학번에 대해서 (중분류, 별점)
-
-  // subcd_star_byStd_Map(arr01(0).toString)(0)
-  // starPoint = starPoint(NCR_T01_P04_C03,3.8)
-
-  // subcd_star_byStd_Map(arr01(0).toString)(0).subcd
-  // String = NCR_T01_P04_C03
-
-  for(i<-0 until subcd_star_byStd_Map(arr01(s).toString).size){ // 학번당 중분류를 order에 넣음
-    order = subcd_byDepart_List.indexOf(subcd_star_byStd_Map(arr01(s).toString)(i).subcd)::order
-    //names = subcd_star_byStd_Map(arr01(s).toString)(i).subcd::names
-  }
-
-  order = order.sorted // order를 정렬
-
-  for(i<-0 until order.size){ // order 크기 (학번당 들은 중분류를 for문 돌림)
-    var k=0;
-    //print(k)
-    // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-    while(subcd_byDepart_List(order(i))!=subcd_star_byStd_Map(arr01(s).toString)(k).subcd){
-    k+=1;
-    }
-    // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-    star_point = star_point.updated(order(i), subcd_star_byStd_Map(arr01(s).toString)(k).starpoint)
-  }
-  tuples = tuples :+ (arr01(s), star_point.toString)
-}
-
-var df = tuples.toDF("STD_NO", "RATING")
-
-
-
-
-
 //--------------------mongodb에서 collection 복제---------------------
 // db.CPS_NCR_PROGRAM_INFO.find().forEach( function(x){db.CPS_NCR_PROGRAM_INFO2.insert(x)} )
 //--------------------mongodb에서 데이터 삭제 : 지우기 전에 원본 데이터 복사해두고 하나만 insert------------
@@ -309,18 +324,18 @@ var df = tuples.toDF("STD_NO", "RATING")
 //학생 한명이 수강한 비교과 list -> 별점 가져오기(from. 교과/비교과 별점 테이블) -> 중분류 가져오기 -> 중분류 별 별점 avg 계산
 
 
-// ---------------------------------------------------------------------------
-// from. 비교과 테이블 : NCR~ ID를 이용해 별점 테이블에 데이터를 생성해줌 !!!!***
+// ---------------------------------------------------------------------------`
+// from. 비교과 테이블 : NCR~ ID를 이용해 별점 테이블에 데이터를 생성해줌 !!!!***`
 // var test = ncrInfoUri_DF.select(col("NPI_KEY_ID"),col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo("NCR000000000718"))
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 var get_NPI_KEY_ID = ncrInfoUri_DF.select(col("NPI_KEY_ID"),col("NPI_AREA_SUB_CD"))
 //<학생 DataFrame> / 하나의 학과의 학생 => 지금 컴퓨터공학과 학생을 조회했으니까 컴퓨터공학과 학번을 조회해서 별점 테이블에 데이터를 삽입해줌
-// var departNM = "컴퓨터공학과"
+var departNM = "컴퓨터공학과"
 //from. 교과 수료 테이블 : departNM에 담긴 학과의 학생들의 학번을 가져옴
 var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 students_in_departNM.show
 // ---------------------------------------------------------------------------
-// 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932|   |20152611| |20152615|
+// 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932||20152611| ////////////////////// |20152615| 잘못넣음
 // ---------------------------------------------------------------------------
 
 
@@ -380,7 +395,8 @@ var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).dist
 var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
 //학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
-var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
+
+var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}")).show
 
 //---------------------------<학생 한명의 비교과중분류 별 별점평균 데이터프레임 생성>----------------------------------------
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
