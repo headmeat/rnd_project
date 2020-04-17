@@ -1,3 +1,4 @@
+
 //-------------------- # # # 비교과 리스트 # # # --------------------------------
 // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT)
 // from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
@@ -221,11 +222,6 @@ println(subcd_byDepart_List)
 
 // 학과의 모든 학번의 (중분류, 별점) Map
 subcd_star_byStd_Map
-
-
-
-
-
 //----------------------------------------------------------------------------------------------------------------------------
 
 val arr01 = Array(20142820, 20142932, 20152611)
@@ -235,58 +231,9 @@ subcd_star_byStd_Map("20142932")(0).starpoint
 var sub_cd = List[Any]()
 var star_point = List[Any]()
 var star_point_list = List[Any]()
-/*
-arr01.foreach{ stdNO =>
 
-}*/
-//
-// for(i <- 0 until arr01.size){
-//   for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
-//     // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
-//
-//     star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
-//
-//     // sub_cd.flatMap(x => Some(x))
-//     // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
-//     // star_point.flatMap(x => Some(x))
-//   }
-//   // star_point_list =
-// }
-//
-//
-//
-// for(i <- 0 until arr01.size){
-//     sub_cd = sub_cd ++ subcd_star_byStd_Map(arr01(i).toString)(i).subcd
-//     sub_cd.flatMap(x => Some(x))
-//     star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(i).starpoint
-//     star_point.flatMap(x => Some(x))
-// }
-//
-// var star_point = List[Any]()
-//
-// subcd_byDepart_List.foreach { subcd =>
-//   for(i <- 0 until arr01.size){
-//     var temp = subcd_star_byStd_Map(arr01(i).toString)(i).subcd
-//     println(temp)
-//     // for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
-//     //   // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
-//     //
-//     //   // star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
-//     //   // for()
-//     //
-//     //
-//     //   // sub_cd.flatMap(x => Some(x))
-//     //   // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
-//     //   // star_point.flatMap(x => Some(x))
-//     // }
-//     // star_point_list =
-//   }
-// }
-
-
-//var star_point = List[Any]()
 var names = List[String]()
-var tuples = Seq[(Int, String)]()
+var ncr_tuples = Seq[(String, String)]()
 
 for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
   var star_point = List[Any]() // 학번당 별점을 저장
@@ -294,16 +241,6 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
   for(i<-0 until subcd_byDepart_List.size){ //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 셋팅
     star_point = 0.0::star_point
   }
-
-  // subcd_star_byStd_Map(arr01(0).toString)
-  // Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2))
-  // 학번에 대해서 (중분류, 별점)
-
-  // subcd_star_byStd_Map(arr01(0).toString)(0)
-  // starPoint = starPoint(NCR_T01_P04_C03,3.8)
-
-  // subcd_star_byStd_Map(arr01(0).toString)(0).subcd
-  // String = NCR_T01_P04_C03
 
   for(i<-0 until subcd_star_byStd_Map(arr01(s).toString).size){ // 학번당 중분류를 order에 넣음
     order = subcd_byDepart_List.indexOf(subcd_star_byStd_Map(arr01(s).toString)(i).subcd)::order
@@ -322,7 +259,7 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
     star_point = star_point.updated(order(i), subcd_star_byStd_Map(arr01(s).toString)(k).starpoint)
   }
-  tuples = tuples :+ (arr01(s), star_point.toString)
+  ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_point.toString)
 }
 
-var df = tuples.toDF("STD_NO", "RATING")
+var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")

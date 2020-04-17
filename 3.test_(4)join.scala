@@ -23,22 +23,22 @@ var std_NO = 20142820
 // var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
 
 // 2-1. 학과
-var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
-var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var clPassUri_DF_sbjt = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+var departNM_by_stdNO = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
 var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
 
 // 2-2. 학과 학생 리스트
-var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+var stdNO_in_departNM = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 var stdNO_in_departNM_List = stdNO_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
 
 // 3-1. 학생의 수업 리스트
-var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KOR_NM"))
+var sbjtNM_by_stdNO = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KOR_NM"))
 var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
 
 // 3-2. 학과의 수업 리스트
 // 컴퓨터공학과에서 개설된 수업명을 리스트로 생성 : 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
-var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KOR_NM", "STD_NO")
+var sbjtNM_in_departNM = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KOR_NM", "STD_NO")
 var sbjtNM_in_departNM_List = sbjtNM_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
 
 
@@ -51,12 +51,12 @@ var sbjtNM_in_departNM_List = sbjtNM_in_departNM.rdd.map(r=>r(0)).collect.toList
 // |20142820||20142932| |20152611| /////////////// |20152615|
 // 과목마다 같은 과목이여도 코드가 다를 수 있으므로 한번에 select를 하여 code를 가져와야함
 var std_NO1 = 20142820 (6개)
-var sbjtNM_by_stdNO1 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO1}")).select(col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).show
+var sbjtNM_by_stdNO1 = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("STD_NO").equalTo(s"${std_NO1}")).select(col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).show
 // 네트워크프로그래밍, 시스템분석설계, 인공지능, 네트워크보안, 정보기술세미나, 서버구축및관리
 // AAM00351, AAM00341, AAM00361, AAM00331, AAM00371, AAM00121
 
 var std_NO2 = 20142932 (7개)
-var sbjtNM_by_stdNO2 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}")).select(col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).show
+var sbjtNM_by_stdNO2 = clPassUri_DF_sbjt.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}")).select(col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).show
 // 시스템분석설계, 네트워크보안, 일본어회화Ⅰ, 네트워크프로그래밍, "MOSⅡ ", 인공지능, 정보기술세미나
 // AAM00341, AAM00331, TAA02231, AAM00351, TAA04151, AAM00361, AAM00371
 
@@ -84,7 +84,7 @@ var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").eq
 
 
 //-----------------------------------------------학생 한명----------------------------------------------------
-var student_have_sbjt_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
+var student_have_sbjt_temp1 = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("SUST_CD_NM").equalTo(s"${departNM}"))
 var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
 var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
 
@@ -115,7 +115,7 @@ val isListened_List = isListened_List_temp1.map(_._2)
 var sbjt_tuples = Seq[(String, String)]()
 
 // 학번이 1452개 -> distinct 지정 -> 223 명
-var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
+var stdNO_in_departNM = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
 
 val arr01 = Array(20142820, 20142932, 20152611)
 var arr02 = arr01.toList.map(_.toString)
@@ -174,21 +174,6 @@ var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT")
 //학생 한명이 수강한 비교과 list -> 별점 가져오기(from. 교과/비교과 별점 테이블) -> 중분류 가져오기 -> 중분류 별 별점 avg 계산
 
 
-// ---------------------------------------------------------------------------
-// from. 비교과 테이블 : NCR~ ID를 이용해 별점 테이블에 데이터를 생성해줌 !!!!***
-// var test = ncrInfoUri_DF.select(col("NPI_KEY_ID"),col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo("NCR000000000718"))
-var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
-var get_NPI_KEY_ID = ncrInfoUri_DF.select(col("NPI_KEY_ID"),col("NPI_AREA_SUB_CD"))
-//<학생 DataFrame> / 하나의 학과의 학생 => 지금 컴퓨터공학과 학생을 조회했으니까 컴퓨터공학과 학번을 조회해서 별점 테이블에 데이터를 삽입해줌
-// var departNM = "컴퓨터공학과"
-//from. 교과 수료 테이블 : departNM에 담긴 학과의 학생들의 학번을 가져옴
-var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
-students_in_departNM.show
-// ---------------------------------------------------------------------------
-// 컴퓨터 공학과 학생 4명에 대해 별점 테이블 데이터 추가함 : |20142820||20142932|   |20152611| |20152615|
-// ---------------------------------------------------------------------------
-
-
 // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
 var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
 // from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
@@ -238,14 +223,7 @@ var std_NO4 = 20152611 // 5개
 //   NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03)
 
 
-// from. 교과목수료 테이블 : 학과명, 학번 => 질의를 내린 학생의 학과를 찾기 위해 사용
-var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 
-//학번으로 학생의 학과 찾기 (dataframe) => 컴퓨터공학과 학생
-var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}"))
-
-//학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
-var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}")).toDF
 
 //---------------------------<학생 한명의 비교과중분류 별 별점평균 데이터프레임 생성>----------------------------------------
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
@@ -285,13 +263,13 @@ var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
 //----------------------------------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
-val clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+val clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 val ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
-val students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+val students_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 
 //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
-val stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+val stdNO_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
 
 case class starPoint(subcd:String, starpoint:Any)
 
@@ -387,11 +365,6 @@ println(subcd_byDepart_List)
 
 // 학과의 모든 학번의 (중분류, 별점) Map
 subcd_star_byStd_Map
-
-
-
-
-
 //----------------------------------------------------------------------------------------------------------------------------
 
 val arr01 = Array(20142820, 20142932, 20152611)
@@ -401,58 +374,9 @@ subcd_star_byStd_Map("20142932")(0).starpoint
 var sub_cd = List[Any]()
 var star_point = List[Any]()
 var star_point_list = List[Any]()
-/*
-arr01.foreach{ stdNO =>
 
-}*/
-//
-// for(i <- 0 until arr01.size){
-//   for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
-//     // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
-//
-//     star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
-//
-//     // sub_cd.flatMap(x => Some(x))
-//     // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
-//     // star_point.flatMap(x => Some(x))
-//   }
-//   // star_point_list =
-// }
-//
-//
-//
-// for(i <- 0 until arr01.size){
-//     sub_cd = sub_cd ++ subcd_star_byStd_Map(arr01(i).toString)(i).subcd
-//     sub_cd.flatMap(x => Some(x))
-//     star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(i).starpoint
-//     star_point.flatMap(x => Some(x))
-// }
-//
-// var star_point = List[Any]()
-//
-// subcd_byDepart_List.foreach { subcd =>
-//   for(i <- 0 until arr01.size){
-//     var temp = subcd_star_byStd_Map(arr01(i).toString)(i).subcd
-//     println(temp)
-//     // for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
-//     //   // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
-//     //
-//     //   // star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
-//     //   // for()
-//     //
-//     //
-//     //   // sub_cd.flatMap(x => Some(x))
-//     //   // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
-//     //   // star_point.flatMap(x => Some(x))
-//     // }
-//     // star_point_list =
-//   }
-// }
-
-
-//var star_point = List[Any]()
 var names = List[String]()
-var ncr_tuples = Seq[(Int, String)]()
+var ncr_tuples = Seq[(String, String)]()
 
 for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
   var star_point = List[Any]() // 학번당 별점을 저장
@@ -460,16 +384,6 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
   for(i<-0 until subcd_byDepart_List.size){ //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 셋팅
     star_point = 0.0::star_point
   }
-
-  // subcd_star_byStd_Map(arr01(0).toString)
-  // Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2))
-  // 학번에 대해서 (중분류, 별점)
-
-  // subcd_star_byStd_Map(arr01(0).toString)(0)
-  // starPoint = starPoint(NCR_T01_P04_C03,3.8)
-
-  // subcd_star_byStd_Map(arr01(0).toString)(0).subcd
-  // String = NCR_T01_P04_C03
 
   for(i<-0 until subcd_star_byStd_Map(arr01(s).toString).size){ // 학번당 중분류를 order에 넣음
     order = subcd_byDepart_List.indexOf(subcd_star_byStd_Map(arr01(s).toString)(i).subcd)::order
@@ -488,7 +402,7 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
     star_point = star_point.updated(order(i), subcd_star_byStd_Map(arr01(s).toString)(k).starpoint)
   }
-  ncr_tuples = ncr_tuples :+ (arr01(s), star_point.toString)
+  ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_point.toString)
 }
 
 var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")
@@ -510,14 +424,6 @@ var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")
 //어학(CD02) : 이름(OAM_TITLE)
 //봉사(CD03), 대외활동(CD04), 기관현장실습(CD05) : 활동구분코드(OAM_TYPE_CD)
 
-//학과 학생들 서치
-//학과df
-//for문으로 거기 있는 학번을 입력하고 자율활동내역을 긁어오고 -> 학생리스트
-//학과 리스트 생성
-//횟수 리스트
-
-//학번으로 학과 찾기
-// var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${201937029}"))
 
 import spark.implicits._
 
@@ -525,14 +431,10 @@ var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"),
 var departNM = "광고홍보학과"
 var std_NO1 = 201937039
 var std_NO2 = 20130001
-var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
-var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 
-//광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
-// var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
-
-var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.map(_.toString)
+var stdNO_in_departNM = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
 // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
@@ -627,3 +529,11 @@ var act_df = act_tuples.toDF("STD_NO", "ACTING")
 var act_df_test = act_df.filter(act_df("STD_NO").equalTo("201937039")).show
 
 //------------------------------------------------------------------------------
+
+//===========================================================================================================
+//===========================================================================================================
+//---------------------------------교과(sbjt_df), 비교과(ncr_df), 자율활동(act_df) join -------------------------------
+
+val join_df_temp = sbjt_df.join(ncr_df, col("STD_NO") === col("STD_NO"), "outer")
+val join_df = join_df_temp.join(act_df, col("STD_NO") === col("STD_NO"), "outer")
+join_df.show
