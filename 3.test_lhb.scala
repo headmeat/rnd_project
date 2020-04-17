@@ -154,15 +154,19 @@ var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalT
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 
 //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
-var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+// var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+var stdNO_in_departNM = Array[Int]
+stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect
 
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
 // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
 
 
 var activity_List_byStd = List[Any]()
+var act_tuples = Seq[(Int, String)]()
 //광홍과 학번을 돌면서
 stdNO_in_departNM.foreach{ stdNO =>
+
   var depart_activity_temp = List[Any]()
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
 
@@ -237,7 +241,11 @@ stdNO_in_departNM.foreach{ stdNO =>
 
  //학생 별 코드 횟수, 이름 유무 리스트 출력
  println("activity List !!! : " + activity_List_byStd)
+
+ act_tuples = act_tuples :+ (stdNO, activity_List_byStd.toString)
 }
+
+var act_df = atc_tuples.toDF("STD_NO", "ACTING")
 //------------------------------------------------------------------------------
 
 
@@ -380,7 +388,7 @@ var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).dist
 var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO2}"))
 
 //학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
-var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
+var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}")).toDF
 
 //---------------------------<학생 한명의 비교과중분류 별 별점평균 데이터프레임 생성>----------------------------------------
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
