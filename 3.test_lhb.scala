@@ -2,7 +2,7 @@
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 //###학과 별 학생 번호 보기 ###
-var gradCorpUri_DF = gradCorpUri_table.select(col("GCI_STD_NO"), col("GCI_SUST_CD_NM")).distinct.toDF
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM")).distinct.toDF
 // clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo("컴퓨터공학과")).show
 
 
@@ -10,9 +10,9 @@ var gradCorpUri_DF = gradCorpUri_table.select(col("GCI_STD_NO"), col("GCI_SUST_C
 // clPassUri_table.select(col("SUST_CD_NM"), col("SBJT_KOR_NM")).distinct.toDF.filter(clPassUri_table("SUST_CD_NM").equalTo("컴퓨터공학과")).show
 
 //<학생 DataFrame> / 하나의 학과의 학생
-var departNM = "세무회계학과"
+var departNM = "컴퓨터공학과"
 //departNM에 담긴 학과의 학생들의 학번만 존재
-var students_in_departNM = gradCorpUri_DF.filter(gradCorpUri_DF("GCI_SUST_CD_NM").equalTo(s"${departNM}")).select(col("GCI_STD_NO"))
+var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 students_in_departNM.show
 
  // 201028406
@@ -22,16 +22,14 @@ students_in_departNM.show
  // 201028411
 
 //studentDF_test 중 한명의 학번
-//세무회계학과의 학생
+//컴퓨터공학과 학생
 var std_NO = 20190030
-var studentNO = students_in_departNM.filter(students_in_departNM("GCI_STD_NO").equalTo(s"${std_NO}"))
-
-var departNM = "컴퓨터공학과"
+var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
 
 //--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명-------------------------
 var clPassUri_DF = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO"), col("SBJT_KOR_NM")).distinct.toDF
 // var clPassUri_DF = clPassUri_table.select(col("STD_NO"),col("SBJT_KEY_CD")).distinct.toDF
-var clPassUri_DF_temp = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo("201822730"))
+// var clPassUri_DF_temp = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo("201822730"))
 
 
 //컴퓨터공학과에서 개설된 교과목 데이터프레임
@@ -39,7 +37,9 @@ var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(
 sbjtNM_in_departNM.show
 
 //@@@ 컴퓨터공학과에서 개설된 수업명을 리스트로 생성
-var sbjtNM_List = sbjtNM_in_departNM.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList
+// var sbjtNM_List = sbjtNM_in_departNM.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList
+// 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
+var sbjtNM_List = sbjtNM_in_departNM.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
 
 //컴퓨터공학과 학생 학번을 가지고 그 사람이 수강한 교과목 리스트 생성
 //학과로 filter
@@ -48,30 +48,85 @@ var sbjtNM_List = sbjtNM_in_departNM.select("SBJT_KOR_NM").rdd.map(r=>r(0)).coll
 
 var departNM = "컴퓨터공학과"
 var std_NO = 20190030
-var student_have_sbjt_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
-var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
-var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
+// 20142820 다른 학생
+//
+// //-----------------------------------------------학생 한명----------------------------------------------------
+// var student_have_sbjt_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
+// var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
+// var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
+//
+// //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
+// var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
+//
+// val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+//   //x : record_1
+//   //0 : record_2
+//   //isListend면 1로 바뀜
+//   val name = record._1
+//   val isListened =
+//     if(student_have_sbjt_List.contains(name)) {
+//       1
+//     }
+//     else 0
+//   val isListened_List_temp2 = (name, isListened)
+//   print(isListened_List_temp2)
+//   //리턴하려면 이름을 쳐야 함
+//   //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
+//   isListened_List_temp2
+// }
+// val isListened_List = isListened_List_temp1.map(_._2)
+// //-----------------------------------------------=----------------------------------------------------------------
 
-//@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
-var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
 
-val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
-  //x : record_1
-  //0 : record_2
-  //isListend면 1로 바뀜
-  val name = record._1
-  val isListened =
-    if(student_have_sbjt_List.contains(name)) {
-      1
-    }
-    else 0
-  val isListened_List_temp2 = (name, isListened)
-  print(isListened_List_temp2)
-  //리턴하려면 이름을 쳐야 함
-  //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
-  isListened_List_temp2
+//==================================================일단 계산ㅇ ㅣ너무 느리니까 다른 방법으로,,=======================================
+var tuples = Seq[(Int, List[Int])]()
+
+// 학번이 1452개 -> distinct 지정 -> 223 명
+var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
+
+stdNO_in_departNM.foreach{ stdNO =>
+
+  // 학생별로 (stdNO) 들은 교과목 테이블
+  var student_have_sbjt_temp1 = sbjtNM_in_departNM.filter(sbjtNM_in_departNM("STD_NO").equalTo(s"${stdNO}"))
+  var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
+  student_have_sbjt_temp2.show
+
+  // 학과 전체 교과목 리스트를 순회 (교과, 0)으로 만들어놓음
+  val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+    // println(s"stdNO : ${stdNO} ============= sbjtNM : ${record}")
+    //
+    //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
+    var student_have_sbjt_List = student_have_sbjt_temp2.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
+    // println(s"student_have_sbjt_List--${student_have_sbjt_List}")
+    //x : record_1
+    //0 : record_2
+    //isListend면 1로 바뀜
+    val name = record._1
+
+    val isListened =
+      if(student_have_sbjt_List.contains(name)) {
+        1
+      }
+      else 0
+    val isListened_List_temp2 = (name, isListened)
+    // print(isListened_List_temp2)
+    //리턴하려면 이름을 쳐야 함
+    //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
+    isListened_List_temp2
+  }
+  val isListened_List = isListened_List_temp1.map(_._2).toString
+  println(isListened_List)
+  // tuples = tuples :+ (stdNO, isListened_List)
 }
-val isListened_List = isListened_List_temp1.map(_._2)
+
+var df = tuples.toDF("STD_NO", "SUBJECT")
+
+//==========================================================================================================================
+
+
+
+
+
 
 //-------------------- # # # 자율활동 리스트 # # # ------------------------------
 //from.교외활동 CPS_OUT_ACTIVITY_MNG : 학번(OAM_STD_NO), 활동구분코드(OAM_TYPE_CD), 활동명(OAM_TITLE)
@@ -179,10 +234,59 @@ stdNO_in_departNM.foreach{ stdNO =>
   //자격증01, 어학02 = 유무(1 또는 0)
 
  activity_List_byStd = outAct_code_List ++ activity_List_byStd_temp3
+
  //학생 별 코드 횟수, 이름 유무 리스트 출력
  println("activity List !!! : " + activity_List_byStd)
 }
 //------------------------------------------------------------------------------
+
+
+
+
+//var star_point = List[Any]()
+var names = List[String]()
+var tuples = Seq[(Int, String)]()
+
+for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
+  var star_point = List[Any]() // 학번당 별점을 저장
+  var order = List[Int]() //
+  for(i<-0 until subcd_byDepart_List.size){ //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 셋팅
+    star_point = 0.0::star_point
+  }
+
+  // subcd_star_byStd_Map(arr01(0).toString)
+  // Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2))
+  // 학번에 대해서 (중분류, 별점)
+
+  // subcd_star_byStd_Map(arr01(0).toString)(0)
+  // starPoint = starPoint(NCR_T01_P04_C03,3.8)
+
+  // subcd_star_byStd_Map(arr01(0).toString)(0).subcd
+  // String = NCR_T01_P04_C03
+
+  for(i<-0 until subcd_star_byStd_Map(arr01(s).toString).size){ // 학번당 중분류를 order에 넣음
+    order = subcd_byDepart_List.indexOf(subcd_star_byStd_Map(arr01(s).toString)(i).subcd)::order
+    //names = subcd_star_byStd_Map(arr01(s).toString)(i).subcd::names
+  }
+
+  order = order.sorted // order를 정렬
+
+  for(i<-0 until order.size){ // order 크기 (학번당 들은 중분류를 for문 돌림)
+    var k=0;
+    //print(k)
+    // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
+    while(subcd_byDepart_List(order(i))!=subcd_star_byStd_Map(arr01(s).toString)(k).subcd){
+    k+=1;
+    }
+    // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
+    star_point = star_point.updated(order(i), subcd_star_byStd_Map(arr01(s).toString)(k).starpoint)
+  }
+  tuples = tuples :+ (arr01(s), star_point.toString)
+}
+
+var df = tuples.toDF("STD_NO", "RATING")
+
+
 
 
 
@@ -262,11 +366,11 @@ var std_NO4 = 20152611 // 5개
 //   NCR_T01_P01_C01 NCR_T01_P02_C03 NCR_T01_P02_C03 NCR_T01_P03_C01 NCR_T01_P03_C03 NCR_T01_P04_C03)
 
 
-List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
-  NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03,
-  NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03)
-List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
-  NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03)
+// List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
+//   NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03,
+//   NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03)
+// List(NCR_T01_P01_C01,NCR_T01_P03_C01,NCR_T01_P04_C03,
+//   NCR_T01_P01_C01,NCR_T01_P02_C03,NCR_T01_P02_C03,NCR_T01_P03_C01,NCR_T01_P03_C03,NCR_T01_P04_C03)
 
 
 // from. 교과목수료 테이블 : 학과명, 학번 => 질의를 내린 학생의 학과를 찾기 위해 사용
@@ -324,137 +428,202 @@ val students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalT
 //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
 val stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
 
-case class starPoint(subcd:String, starpoint:Double)
+case class starPoint(subcd:String, starpoint:Any)
 
 // Map 타입의 변수 (string, Array)를 인자로 받음
 // String : 학번, Array : (중분류, 별점)
 val subcd_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
 val subcd_byDepart_Map_temp = collection.mutable.Map[String, Array[String]]()
-val subcd_byDepart_List1 = List[Any]()
+var subcd_byDepart_List = List[Any]()
 
+// 학과별 중분류 중복 제거를 위해 Set으로 데이터타입 선언
 val tmp_set = scala.collection.mutable.Set[String]()
-// val arr01 = Array(20142820, 20142932, 20152611)
-val arr01 = Array(20142820)
+
+var myResStr = ""
+var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
+var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
+
+val arr01 = Array(20142820, 20142932, 20152611)
 
 arr01.foreach{ stdNO =>
-
-// stdNO_in_departNM.foreach{ stdNO =>
-
-  //println("stdNO : " + stdNO)
-  // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
   val key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
   val key_id_List_byStd = key_id_temp.rdd.map{r=> r(0)}.collect.toList
 
-  // 학생이 수강한 비교과 프로그램 id
-  val size = key_id_List_byStd.size
-  //
-  // 디버깅 ,,
-  // if(size>0){
-  //   println(s"stdNO ======================> + ${stdNO}")
-  //   println(s"key_id_List_byStd ======================> + ${key_id_List_byStd}")
-  // }
+  val kidList = key_id_List_byStd.map { keyid =>
+    // var std_NO3 = 20142932 // 5게
+    // 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000731, NCR000000000737, NCR000000000743
+    // 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03
+    val subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
+    val star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
 
-  if(size > 0) {
-    //학생 한명의 프로그램 ID 리스트
-    key_id_List_byStd.foreach{ keyid =>
-      //비교과 id 로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블) (dataframe)
+    star_keyid_DF = star_keyid_DF.union(star_keyid_DF_temp)
+    subcd_keyid_DF = subcd_keyid_DF.union(subcd_keyid_DF_temp)
 
+    val subcd_byStd_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
 
-      var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
-      var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
-
-
-      val subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
-      // 비교과 활동에 대한 별점을 가져옴
-      //
-      val star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
-
-    //   // 빈 dataframe에 foreach를 돌면서 값 추가
-
-    // 학생 한명이 갖고있는 프로그램 id로 별점 조회
-      star_keyid_DF = star_keyid_DF.union(star_keyid_DF_temp)
-      // 학생 한명이 갖고있는 프로그램 id로 중분류 조회
-      subcd_keyid_DF = subcd_keyid_DF.union(subcd_keyid_DF_temp)
-
-      // val res1 = star_keyid_DF.union(star_keyid_DF_temp)
-      // val res2 = subcd_keyid_DF.union(subcd_keyid_DF_temp)
-
-      // star_keyid_DF.show
-      // subcd_keyid_DF.show
-    //
-    //   //-----------------------------------------------------------------------
-    //   // 학과 중분류 dataframe 만들기
-      val subcd_byStd_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
-      subcd_byStd_DF = subcd_byStd_DF.union(subcd_byStd_DF_temp)
-    // }
-    //
-    // // 별점-프로그램id dataframe과 중분류-프로그램id dataframe를 프로그램id에 따라 중복 제거
+    subcd_byStd_DF = subcd_byStd_DF.union(subcd_byStd_DF_temp)
     star_keyid_DF = star_keyid_DF.dropDuplicates("STAR_KEY_ID")
     subcd_keyid_DF = subcd_keyid_DF.dropDuplicates("NPI_KEY_ID")
-    // // 별점-프로그램id dataframe과 중분류-프로그램id dataframe join
-    val star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") === col("NPI_KEY_ID"), "inner")
-    //
+
+    // val star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") === col("NPI_KEY_ID"), "inner")
+    val star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, col("STAR_KEY_ID") === col("NPI_KEY_ID"), "outer")
     val star_subcd_DF = star_subcd_DF_temp.drop("STAR_KEY_ID", "NPI_KEY_ID")
     val star_subcd_avg_DF = star_subcd_DF.groupBy("NPI_AREA_SUB_CD").agg(avg("STAR_POINT"))
     val subcd_byStd_DF2 = star_subcd_DF.drop("STAR_POINT")
-    //
-    // //학생 한명의 중분류별 별점 평균 dataframe을 Map으로 변환
+
     val subcd_star_temp = star_subcd_avg_DF.collect.map{ row =>
-    //   // 중분류
       val str = row.toString
-    //   // [NCR_T01_P04_C03,3.8] 값의 길이 = 21
       val size = str.length
-    //   // [] 제거
       val res = str.substring(1, size-1).split(",")
-    //   // res(0) : 중분류, res(1) : starpoint
-      val starP = starPoint(res(0), res(1).toDouble)
+      val starP = starPoint(res(0), res(1))
       starP
     }
-    //
-    // // key : 학번, value : subcd_star_temp(중분류, 별점)
+
     val subcd_star_record = (stdNO.toString, subcd_star_temp)
-    // println(s"this --> $subcd_star_record")
+    // println(s"star 1 ==== ${subcd_star_record.mkString(",")} \n ====")
     subcd_star_byStd_Map+=(subcd_star_record)
 
     val subcd_byDepart_temp = subcd_byStd_DF2.collect.map{ row =>
-      println(row)
-      val str = row.toString
-      // [NCR_T01_P04_C03,3.8] 값의 길이 = 21
-      val size = str.length
-      // [] 제거
-      val res = str.substring(1, size-1).split(",")(0)
-      if(tmp_set.add(res)) {
-        println(s"insert new value : ${res}")
-        tmp_set.+(res)
-      }
-      // res(0) : 중분류, res(1) : starpoint
-      res
+      // 별점만 가져온거
+        // println(row)
+        val str = row.toString
+        val size = str.length
+        val res = str.substring(1, size-1).split(",")(0)
+        if(tmp_set.add(res)) {
+          // println(s"insert new value : ${res}")
+          tmp_set.+(res)
+        }
+        res
     }.sortBy(x => x)
 
-
     val subcd_record_byDepart = (s"$stdNO", subcd_byDepart_temp)
-    // println(s"this --> $subcd_record_byDepart")
-    // subcd_byDepart_Map += (subcd_record_byDepart.get(s"$departNM").get)
     subcd_byDepart_Map_temp += subcd_record_byDepart
+    val t1 = subcd_byDepart_Map_temp.map(x => x._2).flatMap(x => x).toList.distinct
+
+    star_subcd_DF_temp.show // TO DEBUG
+
+    // println("t1-------------------->" + t1)
+ }
+
+ val t1 = subcd_byDepart_Map_temp.map(x => x._2).flatMap(x => x).toList.distinct
+ val xres = s"result stdno : ${stdNO} size : ${t1.length} ==--------------------> ${t1}"
+ myResStr = myResStr.concat("\n"+xres)
+
+subcd_byDepart_List = t1
+} //학번 루프 끝
 
 
-    val t1 = subcd_byDepart_Map_temp.map(x => x._2).flatMap(x => x).toList
-    println("t1-------------------->" + t1)
-    // t1.map(x => print(x))
-    subcd_byDepart_List1 = t1.distinct
-    // println("####################################################" + t2)
-    // subcd_byDepart_List = subcd_byDepart_List ++ t2
-    // println("-----------------map_temp----------------------: " + s"\n${t1.map(x => x.mkString(" "))}")
+// 학과의 중분류 List
+// Map(20142932 -> Array(starPoint(NCR_T01_P01_C03,null), starPoint(NCR_T01_P05_C02,null), starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)),
+// 20152611 -> Array(starPoint(NCR_T01_P01_C03,null), starPoint(NCR_T01_P05_C02,null), starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P04_C07,null), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)),
+// 20142820 -> Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)))
 
-  }
-}
-}
-star_keyid_DF.show
-subcd_keyid_DF.show
+println(subcd_byDepart_List)
 
-println(subcd_byDepart_List1)
+// 학과의 모든 학번의 (중분류, 별점) Map
+subcd_star_byStd_Map
 
-var subcd_byDepart_List2 = subcd_byDepart_List1.distinct
 
-println(subcd_byDepart_List2)
+
+
+
 //----------------------------------------------------------------------------------------------------------------------------
+
+val arr01 = Array(20142820, 20142932, 20152611)
+
+subcd_star_byStd_Map("20142932")(0).subcd
+subcd_star_byStd_Map("20142932")(0).starpoint
+var sub_cd = List[Any]()
+var star_point = List[Any]()
+var star_point_list = List[Any]()
+/*
+arr01.foreach{ stdNO =>
+
+}*/
+//
+// for(i <- 0 until arr01.size){
+//   for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
+//     // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
+//
+//     star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
+//
+//     // sub_cd.flatMap(x => Some(x))
+//     // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
+//     // star_point.flatMap(x => Some(x))
+//   }
+//   // star_point_list =
+// }
+//
+//
+//
+// for(i <- 0 until arr01.size){
+//     sub_cd = sub_cd ++ subcd_star_byStd_Map(arr01(i).toString)(i).subcd
+//     sub_cd.flatMap(x => Some(x))
+//     star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(i).starpoint
+//     star_point.flatMap(x => Some(x))
+// }
+//
+// var star_point = List[Any]()
+//
+// subcd_byDepart_List.foreach { subcd =>
+//   for(i <- 0 until arr01.size){
+//     var temp = subcd_star_byStd_Map(arr01(i).toString)(i).subcd
+//     println(temp)
+//     // for ( j <- 0 until subcd_star_byStd_Map(arr01(i).toString).size){
+//     //   // sub_cd = subcd_star_byStd_Map(arr01(i).toString)(j).subcd :: sub_cd
+//     //
+//     //   // star_point = subcd_star_byStd_Map(arr01(i).toString)(j).starpoint :: star_point
+//     //   // for()
+//     //
+//     //
+//     //   // sub_cd.flatMap(x => Some(x))
+//     //   // star_point = star_point ++ subcd_star_byStd_Map(arr01(i).toString)(j).starpoint
+//     //   // star_point.flatMap(x => Some(x))
+//     // }
+//     // star_point_list =
+//   }
+// }
+
+
+//var star_point = List[Any]()
+var names = List[String]()
+var tuples = Seq[(Int, String)]()
+
+for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
+  var star_point = List[Any]() // 학번당 별점을 저장
+  var order = List[Int]() //
+  for(i<-0 until subcd_byDepart_List.size){ //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 셋팅
+    star_point = 0.0::star_point
+  }
+
+  // subcd_star_byStd_Map(arr01(0).toString)
+  // Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2))
+  // 학번에 대해서 (중분류, 별점)
+
+  // subcd_star_byStd_Map(arr01(0).toString)(0)
+  // starPoint = starPoint(NCR_T01_P04_C03,3.8)
+
+  // subcd_star_byStd_Map(arr01(0).toString)(0).subcd
+  // String = NCR_T01_P04_C03
+
+  for(i<-0 until subcd_star_byStd_Map(arr01(s).toString).size){ // 학번당 중분류를 order에 넣음
+    order = subcd_byDepart_List.indexOf(subcd_star_byStd_Map(arr01(s).toString)(i).subcd)::order
+    //names = subcd_star_byStd_Map(arr01(s).toString)(i).subcd::names
+  }
+
+  order = order.sorted // order를 정렬
+
+  for(i<-0 until order.size){ // order 크기 (학번당 들은 중분류를 for문 돌림)
+    var k=0;
+    //print(k)
+    // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
+    while(subcd_byDepart_List(order(i))!=subcd_star_byStd_Map(arr01(s).toString)(k).subcd){
+    k+=1;
+    }
+    // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
+    star_point = star_point.updated(order(i), subcd_star_byStd_Map(arr01(s).toString)(k).starpoint)
+  }
+  tuples = tuples :+ (arr01(s), star_point.toString)
+}
+
+var df = tuples.toDF("STD_NO", "RATING")
