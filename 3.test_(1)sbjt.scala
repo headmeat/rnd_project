@@ -39,9 +39,8 @@ var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.disti
 
 // 3-2. 학과의 수업 리스트
 // 컴퓨터공학과에서 개설된 수업명을 리스트로 생성 : 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
-// var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KOR_NM", "STD_NO")
-var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KEY_CD", "STD_NO")
-var sbjtNM_in_departNM_List = sbjtNM_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
+var sbjtCD_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KEY_CD", "STD_NO")
+var sbjtCD_in_departNM_List = sbjtCD_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
 
 
 /*
@@ -70,32 +69,6 @@ var sbjtNM_by_stdNO3 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${st
 // --------------------------------------------별점 추가하기 끝---------------------------------------------
 */
 
-// //-----------------------------------------------학생 한명----------------------------------------------------
-// var student_have_sbjt_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
-// var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
-// var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
-//
-// //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
-// var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
-//
-// val isListened_List_temp1 = sbjtNM_in_departNM_List.map(x => (x, 0)).map{ record =>
-//   //x : record_1
-//   //0 : record_2
-//   //isListend면 1로 바뀜
-//   val name = record._1
-//   val isListened =
-//     if(student_have_sbjt_List.contains(name)) {
-//       1
-//     }
-//     else 0
-//   val isListened_List_temp2 = (name, isListened)
-//   print(isListened_List_temp2)
-//   //리턴하려면 이름을 쳐야 함
-//   //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
-//   isListened_List_temp2
-// }
-// val isListened_List = isListened_List_temp1.map(_._2)
-// //-----------------------------------------------=----------------------------------------------------------------
 
 
 //==================================================일단 계산ㅇ ㅣ너무 느리니까 다른 방법으로,,=======================================
@@ -110,7 +83,7 @@ val stdNO_sbjt_temp2 = stdNO_sbjt_temp1.toList.map(_.toString)
 stdNO_sbjt_temp2.foreach{ stdNO =>
 
   // 학생별로 (stdNO) 들은 교과목 테이블
-  var student_have_sbjt_temp1 = sbjtNM_in_departNM.filter(sbjtNM_in_departNM("STD_NO").equalTo(s"${stdNO}"))
+  var student_have_sbjt_temp1 = sbjtCD_in_departNM.filter(sbjtCD_in_departNM("STD_NO").equalTo(s"${stdNO}"))
   // var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
   var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KEY_CD"))
   // student_have_sbjt_temp2.show
@@ -130,9 +103,8 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
   // var getStar = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${star_key_id}")).select(col("STAR_POINT"))
   // var temp = getStar.collect().map(_.getDouble(0)).mkString("")
 
-
   // 학과 전체 교과목 리스트를 순회 (교과, 0)으로 만들어놓음
-  val getStar_List_temp1 = sbjtNM_in_departNM_List.map(x => (x, 0)).map{ record =>
+  val getStar_List_temp1 = sbjtCD_in_departNM_List.map(x => (x, 0)).map{ record =>
     // println(s"stdNO : ${stdNO} ============= sbjtNM : ${record}")
     //
     //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
@@ -141,23 +113,21 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
     //x : record_1
     //0 : record_2
     //isListend면 1로 바뀜
-    val name = record._1
+    val sbjtCD = record._1
 
     val getStar =
-      if(student_have_sbjt_List.contains(name)) {
+      if(student_have_sbjt_List.contains(sbjtCD)) {
 
         var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
         // var star_key_id = "AAM00351"
-        var getStar2 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${name}")).select(col("STAR_POINT"))
-        println("----------getStar---------")
-        getStar2.show
-        var temp = getStar2.collect().map(_.getDouble(0)).mkString("")
+        var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+        var getStar_temp2 = getStar_temp1.collect().map(_.getDouble(0)).mkString("")
         // println("-------------------")
         // println(temp)
-        temp
+        getStar_temp2
       }
       else 0
-    val getStar_List_temp2 = (name, getStar)
+    val getStar_List_temp2 = (sbjtCD, getStar)
     // print(isListened_List_temp2)
     //리턴하려면 이름을 쳐야 함
     //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
@@ -170,4 +140,4 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
   sbjt_tuples = sbjt_tuples :+ (stdNO, getStar_List)
 }
 
-var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT")
+var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT_STAR")
