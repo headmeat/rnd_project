@@ -40,7 +40,9 @@ var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.disti
 // 3-2. 학과의 수업 리스트
 // 컴퓨터공학과에서 개설된 수업명을 리스트로 생성 : 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
 var sbjtCD_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KEY_CD", "STD_NO")
-var sbjtCD_in_departNM_List = sbjtCD_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
+//학과별 교과목코드와 학생의 교과목 코드를 인덱스 비교 하기 위해 정렬함(sorted)
+var sbjtCD_in_departNM_List = sbjtCD_in_departNM.rdd.map(r=>r(0).toString).collect.toList.distinct.sorted
+
 
 
 /*
@@ -108,7 +110,8 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
     // println(s"stdNO : ${stdNO} ============= sbjtNM : ${record}")
     //
     //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
-    var student_have_sbjt_List = student_have_sbjt_temp2.select("SBJT_KEY_CD").rdd.map(r=>r(0)).collect.toList.distinct
+    //학과별 교과목코드와 학생의 교과목 코드를 인덱스 비교 하기 위해 정렬함(sorted)
+    var student_have_sbjt_List = student_have_sbjt_temp2.select("SBJT_KEY_CD").rdd.map(r=>r(0).toString).collect.toList.distinct.sorted
     // println(s"student_have_sbjt_List--${student_have_sbjt_List}")
     //x : record_1
     //0 : record_2
@@ -120,6 +123,9 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
 
         var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
         // var star_key_id = "AAM00351"
+
+        //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+
         var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
         var getStar_temp2 = getStar_temp1.collect().map(_.getDouble(0)).mkString("")
         // println("-------------------")
