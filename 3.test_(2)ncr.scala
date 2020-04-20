@@ -238,13 +238,13 @@ var ncr_tuples = Seq[(String, String)]()
 
 for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
   var star_point_List = List[Any]() // 학번당 별점을 저장
-  var order = List[Int]() //학번 당 중분류 리스트
+  var orderedIdx_byStd = List[Int]() //학번 당 중분류 리스트
   //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 초기화
   for(i<-0 until subcd_byDepart_List.size){
     star_point_List = 0.0::star_point_List
   }
   //Map연산을 위해 학번을 string으로 변환(arr01(s).toString)
-  // 학번당 중분류를 order에 넣음
+  // 학번당 중분류를 orderedIdx_byStd에 넣음
   //i : 학번 하나가 가진 중분류 개수만큼 반복
 
   //학과 모든 학생의 중분류-별점 Map 에서 학번 하나의 값(중분류-별점)을 가져옴(Map연산을 위해 toString으로 변환)
@@ -253,22 +253,22 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
   for(i<-0 until valueBystdNo_from_Map.size){
     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
     //학생 한명이 들은 중분류 리스트를 가져옴
-    order = subcd_byDepart_List.indexOf(valueBystdNo_from_Map(i).subcd)::order
-    println("order ===> " + order)
+    orderedIdx_byStd = subcd_byDepart_List.indexOf(valueBystdNo_from_Map(i).subcd)::orderedIdx_byStd
+    println("orderedIdx_byStd ===> " + orderedIdx_byStd)
   }
-  // order를 정렬(중분류 코드 정렬)
-  order = order.sorted
-  println("ordersorted ===>" + order)
+  // orderedIdx_byStd를 정렬(중분류 코드 정렬)
+  orderedIdx_byStd = orderedIdx_byStd.sorted
+  println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
 
-  for(i<-0 until order.size){ // order 크기 (학번당 들은 중분류를 for문 돌림)
+  for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
     var k=0;
     //print(k)
     // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-    while(subcd_byDepart_List(order(i))!= valueBystdNo_from_Map(k).subcd){
+    while(subcd_byDepart_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).subcd){
     k+=1;
     }
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-    star_point_List = star_point_List.updated(order(i), valueBystdNo_from_Map(k).starpoint)
+    star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
   }
   //arr01(s).toString : 학번
   ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_point_List.toString)
