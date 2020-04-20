@@ -80,44 +80,13 @@ var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")
 var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${std_NO}")).show
 
 
-
-
-
-//-----------------------------------------------학생 한명----------------------------------------------------
-var student_have_sbjt_temp1 = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("SUST_CD_NM").equalTo(s"${departNM}"))
-var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
-var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
-
-//@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
-var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
-
-val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
-  //x : record_1
-  //0 : record_2
-  //isListend면 1로 바뀜
-  val name = record._1
-  val isListened =
-    if(student_have_sbjt_List.contains(name)) {
-      1
-    }
-    else 0
-  val isListened_List_temp2 = (name, isListened)
-  print(isListened_List_temp2)
-  //리턴하려면 이름을 쳐야 함
-  //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
-  isListened_List_temp2
-}
-val isListened_List = isListened_List_temp1.map(_._2)
-//-----------------------------------------------=----------------------------------------------------------------
-
-
-//==================================================일단 계산ㅇ ㅣ너무 느리니까 다른 방법으로,,=======================================
+//==================================================계산이 느림 => 코드수정 필요 // 일단 학생 3명에 대해서 테스트=======================================
 var sbjt_tuples = Seq[(String, String)]()
 
 // 학번이 1452개 -> distinct 지정 -> 223 명
 var stdNO_in_departNM = clPassUri_DF_sbjt.filter(clPassUri_DF_sbjt("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
 
-val arr01 = Array(20142820, 20142932, 20152611)
+var arr01 = Array(20142820, 20142932, 20152611)
 var arr02 = arr01.toList.map(_.toString)
 
 arr02.foreach{ stdNO =>
@@ -128,7 +97,7 @@ arr02.foreach{ stdNO =>
   student_have_sbjt_temp2.show
 
   // 학과 전체 교과목 리스트를 순회 (교과, 0)으로 만들어놓음
-  val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+  val isListened_List_temp1 = sbjtNM_in_departNM_List.map(x => (x, 0)).map{ record =>
     // println(s"stdNO : ${stdNO} ============= sbjtNM : ${record}")
     //
     //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
@@ -263,13 +232,13 @@ var subcd_byDepart_DF = spark.createDataFrame(sc.emptyRDD[Row], schema5)
 //----------------------------------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
-val clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
-val ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
-val students_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
+var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
+var students_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO"))
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 
 //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
-val stdNO_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
+var stdNO_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
 
 case class starPoint(subcd:String, starpoint:Any)
 
@@ -286,7 +255,7 @@ var myResStr = ""
 var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
 var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
-val arr01 = Array(20142820, 20142932, 20152611)
+var arr01 = Array(20142820, 20142932, 20152611)
 
 arr01.foreach{ stdNO =>
   val key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
@@ -296,6 +265,7 @@ arr01.foreach{ stdNO =>
     // var std_NO3 = 20142932 // 5게
     // 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000731, NCR000000000737, NCR000000000743
     // 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03
+    var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}")).toDF
     val subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
     val star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
 
@@ -367,10 +337,10 @@ println(subcd_byDepart_List)
 subcd_star_byStd_Map
 //----------------------------------------------------------------------------------------------------------------------------
 
-val arr01 = Array(20142820, 20142932, 20152611)
-
-subcd_star_byStd_Map("20142932")(0).subcd
-subcd_star_byStd_Map("20142932")(0).starpoint
+var arr01 = Array(20142820, 20142932, 20152611)
+//
+// subcd_star_byStd_Map("20142932")(0).subcd
+// subcd_star_byStd_Map("20142932")(0).starpoint
 var sub_cd = List[Any]()
 var star_point = List[Any]()
 var star_point_list = List[Any]()
@@ -408,10 +378,6 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
 var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")
 
 
-
-
-
-
 //===========================================================================================================
 //===========================================================================================================
 
@@ -436,6 +402,9 @@ var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).
 
 var stdNO_in_departNM = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
+var arr01 = Array(201937039, 20153128, 20132019)
+var arr02 = arr01.toList.map(_.toString)
+
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
 // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
 
@@ -443,7 +412,7 @@ var stdNO_in_departNM = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").e
 var activity_List_byStd = List[Any]()
 var act_tuples = Seq[(String, String)]()
 //광홍과 학번을 돌면서
-stdNO_in_departNM.foreach{ stdNO =>
+arr02.foreach{ stdNO =>
 
   var depart_activity_temp = List[Any]()
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
@@ -453,7 +422,7 @@ stdNO_in_departNM.foreach{ stdNO =>
   //List3 : List1 + List2 = 코드리스트 + 이름리스트 (학생 한명이 수행한 자율활동내용)
   //---------------------자율활동 code list(자격증01, 어학02)----------------------
   //5개의 코드 (학생 한명이 수행한 봉사03, 대외04, 기관05을 코드 별로 groupby count list)
-  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
+  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${std_NO1}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
   //3개의 코드만 필터링
   var outAct_code_temp2 = outAct_code_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
   //학생 한명의 활동 코드만 존재하는 dataframe
@@ -526,7 +495,7 @@ stdNO_in_departNM.foreach{ stdNO =>
 
 var act_df = act_tuples.toDF("STD_NO", "ACTING")
 
-var act_df_test = act_df.filter(act_df("STD_NO").equalTo("201937039")).show
+// var act_df_test = act_df.filter(act_df("STD_NO").equalTo("201937039")).show
 
 //------------------------------------------------------------------------------
 
@@ -537,3 +506,6 @@ var act_df_test = act_df.filter(act_df("STD_NO").equalTo("201937039")).show
 val join_df_temp = sbjt_df.join(ncr_df, col("STD_NO") === col("STD_NO"), "outer")
 val join_df = join_df_temp.join(act_df, col("STD_NO") === col("STD_NO"), "outer")
 join_df.show
+
+// val join_df_temp = sbjt_df.join(ncr_df, sbjt_df("STD_NO") === ncr_df("STD_NO"), "outer")
+// val df = join_df_temp.join(ncr_df, "STD_NO", "outer")

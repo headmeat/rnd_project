@@ -28,6 +28,9 @@ var students_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalT
 
 var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
+var arr01 = Array(201937039, 20153128, 20132019)
+var arr02 = arr01.toList.map(_.toString)
+
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
 // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
 
@@ -35,7 +38,7 @@ var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s
 var activity_List_byStd = List[Any]()
 var act_tuples = Seq[(String, String)]()
 //광홍과 학번을 돌면서
-stdNO_in_departNM.foreach{ stdNO =>
+arr02.foreach{ stdNO =>
 
   var depart_activity_temp = List[Any]()
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
@@ -118,6 +121,6 @@ stdNO_in_departNM.foreach{ stdNO =>
 
 var act_df = act_tuples.toDF("STD_NO", "ACTING")
 
-var act_df_test = act_df.filter(act_df("STD_NO").equalTo("201937039")).show
+// var act_df_test = act_df.filter(act_df("STD_NO").equalTo("201937039")).show
 
 //------------------------------------------------------------------------------

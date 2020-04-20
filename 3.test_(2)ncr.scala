@@ -145,6 +145,9 @@ var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
 val arr01 = Array(20142820, 20142932, 20152611)
 
+val stdNO_ncr_temp1 = Array(20142820, 20142932, 20152611)
+val stdNO_ncr_temp2 = stdNO_sbjt_temp1.toList.map(_.toString)
+
 arr01.foreach{ stdNO =>
   val key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
   val key_id_List_byStd = key_id_temp.rdd.map{r=> r(0)}.collect.toList
@@ -153,6 +156,7 @@ arr01.foreach{ stdNO =>
     // var std_NO3 = 20142932 // 5게
     // 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000731, NCR000000000737, NCR000000000743
     // 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03
+    var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}")).toDF
     val subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
     val star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
 

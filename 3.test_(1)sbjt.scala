@@ -91,7 +91,7 @@ var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
 //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
 var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
 
-val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+val isListened_List_temp1 = sbjtNM_in_departNM_List.map(x => (x, 0)).map{ record =>
   //x : record_1
   //0 : record_2
   //isListend면 1로 바뀜
@@ -117,10 +117,10 @@ var sbjt_tuples = Seq[(String, String)]()
 // 학번이 1452개 -> distinct 지정 -> 223 명
 var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
 
-val arr01 = Array(20142820, 20142932, 20152611)
-var arr02 = arr01.toList.map(_.toString)
+val stdNO_sbjt_temp1 = Array(20142820, 20142932, 20152611)
+val stdNO_sbjt_temp2 = stdNO_sbjt_temp1.toList.map(_.toString)
 
-arr02.foreach{ stdNO =>
+stdNO_sbjt_temp2.foreach{ stdNO =>
 
   // 학생별로 (stdNO) 들은 교과목 테이블
   var student_have_sbjt_temp1 = sbjtNM_in_departNM.filter(sbjtNM_in_departNM("STD_NO").equalTo(s"${stdNO}"))
@@ -128,7 +128,7 @@ arr02.foreach{ stdNO =>
   student_have_sbjt_temp2.show
 
   // 학과 전체 교과목 리스트를 순회 (교과, 0)으로 만들어놓음
-  val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+  val isListened_List_temp1 = sbjtNM_in_departNM_List.map(x => (x, 0)).map{ record =>
     // println(s"stdNO : ${stdNO} ============= sbjtNM : ${record}")
     //
     //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
