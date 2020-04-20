@@ -503,9 +503,12 @@ var act_df = act_tuples.toDF("STD_NO", "ACTING")
 //===========================================================================================================
 //---------------------------------교과(sbjt_df), 비교과(ncr_df), 자율활동(act_df) join -------------------------------
 
-val join_df_temp = sbjt_df.join(ncr_df, col("STD_NO") === col("STD_NO"), "outer")
-val join_df = join_df_temp.join(act_df, col("STD_NO") === col("STD_NO"), "outer")
+val join_df_temp = sbjt_df.join(ncr_df, Seq("STD_NO"), "outer")
+val join_df = join_df_temp.join(act_df, Seq("STD_NO"), "outer")
+
 join_df.show
+
+
 
 // val join_df_temp = sbjt_df.join(ncr_df, sbjt_df("STD_NO") === ncr_df("STD_NO"), "outer")
 // val df = join_df_temp.join(ncr_df, "STD_NO", "outer")
