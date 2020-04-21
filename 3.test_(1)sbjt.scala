@@ -182,7 +182,7 @@ var arr01 = Array(20142820, 20142932, 20152611)
 
 
 case class starPoint(sbjtCD:String, starpoint:Any)
-val sbjtCD_star_byStd_Map = collection.mutable.Map[String, starPoint]()
+val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
 
 
 
@@ -197,26 +197,33 @@ val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
 
 
 
-arr01.foreach { stdNO =>
+val temp001 = arr01.flatMap{ stdNO =>
 
   // 학번 별 학번-교과코드-별점
   val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
   // star_temp_bystdNO_DF.show
-
   // var sbjtcd_star_temp =
-  star_temp_bystdNO_DF.collect.map{record =>
 
-    val key = record(0)
-    println(key)
-    val starP = starPoint(record(1).toString, record(2).toString)
-    println(starP)
+  val res =
+    star_temp_bystdNO_DF
+    .collect // dataframe 를 collect 해서 array[row] 를 받음
+    .map(record => (record(0).toString, starPoint(record(1).toString, record(2).toString)))
+    // 각 row에 대해서 (학번, starPoint 객체) 로 바꿈
+    .groupBy(x => x._1) // 이걸 하면 데이터 타입이 맵(학번, )
+    .map( x => (x._1, x._2.map(x => x._2)))
+    // 그룹바이를 학번으로 해서 (학번, Array)
 
-    val sbjtcd_star_record = (stdNO.toString, starP)
-    println(sbjtcd_star_record)
-
-    sbjtCD_star_byStd_Map += (sbjtcd_star_record)
-  }
-}
+  // star_temp_bystdNO_DF.collect.map{record =>
+  //   val key = record(0)
+  //   println(key)
+  //   val starP = starPoint(record(1).toString, record(2).toString)
+  //   println(starP)
+  //   val sbjtcd_star_record = (stdNO.toString, starP)
+  //   println(sbjtcd_star_record)
+  //   sbjtCD_star_byStd_Map += (sbjtcd_star_record)
+  // }
+  res
+}.toMap
 
 
 
