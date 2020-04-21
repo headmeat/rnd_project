@@ -436,15 +436,18 @@ var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")
 import spark.implicits._
 
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
-var departNM = "광고홍보학과"
-var std_NO1 = 201937039
+// var departNM = "광고홍보학과"
+var departNM = "컴퓨터공학과"
+// var std_NO1 = 201937039
+var std_NO1 = 20142820
 var std_NO2 = 20130001
 var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 
 var stdNO_in_departNM = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
-var arr01 = Array(201937039, 20153128, 20132019)
+// var arr01 = Array(201937039, 20153128, 20132019)
+var arr01 = Array(20142820, 20142932, 20152611)
 var arr02 = arr01.toList.map(_.toString)
 
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
@@ -464,7 +467,7 @@ arr02.foreach{ stdNO =>
   //List3 : List1 + List2 = 코드리스트 + 이름리스트 (학생 한명이 수행한 자율활동내용)
   //---------------------자율활동 code list(자격증01, 어학02)----------------------
   //5개의 코드 (학생 한명이 수행한 봉사03, 대외04, 기관05을 코드 별로 groupby count list)
-  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${std_NO1}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
+  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
   //3개의 코드만 필터링
   var outAct_code_temp2 = outAct_code_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
   //학생 한명의 활동 코드만 존재하는 dataframe
