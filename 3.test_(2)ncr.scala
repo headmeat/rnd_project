@@ -237,7 +237,7 @@ subcd_star_byStd_Map("20142932")(0).subcd
 subcd_star_byStd_Map("20142932")(0).starpoint
 
 //최종적인 학번 별 별점 리스트 값이 들어있는 시퀀스
-var ncr_tuples = Seq[(String, String)]()
+var ncr_tuples = Seq[(String, List[Float])]()
 
 for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
   var star_point_List = List[Any]() // 학번당 별점을 저장
@@ -272,11 +272,12 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
     }
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
     star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
+
+    // println(s"$star_point_List")
   }
-  //arr01(s).toString : 학번
-
-  ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_point_List.toString)
-
+  val star_list = star_point_List.map(x => x.toString.toFloat)
+  println(">>"+star_list)
+  ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_list)
 }
 
 var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")
