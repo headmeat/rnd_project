@@ -228,22 +228,44 @@ for(s<-0 until sbjtCD_star_byStd_Map.size){
   var orderedIdx_byStd = List[Int]() //학번 당 교과 리스트
 
   for(i<-0 until sbjtCD_in_departNM_List.size){
-    star_point_List = 0.0::star_point_List
-  }
 
-  // for(i<-0 until )
+    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
+    // var star_key_id = "AAM00351"
+
+    //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+    var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
+    var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+
+    if(getStar_temp1.count == 0){
+       star_point_List = -1.0::star_point_List
+    }else{
+      star_point_List = 0.0::star_point_List
+    }
+
+  }
   //
-  // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
-  // // var star_key_id = "AAM00351"
-  // getStar_by_stdNO.show
-  // // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
-  // var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(0).sbjtCD
-  // println("sbjtCD" + sbjtCD)
-  // // var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
-  // // if(getStar_temp1.count == 0){
-  // //    -1
-  // // }
-  //
+  for(i<-0 until sbjtNM_by_stdNO_List.size){
+  
+    var student_have_sbjt_temp1 = sbjtCD_in_departNM.filter(sbjtCD_in_departNM("STD_NO").equalTo(s"${arr01(s)}"))
+    // var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
+    var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KEY_CD"))
+    student_have_sbjt_temp2.show
+
+    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
+    // var star_key_id = "AAM00351"
+    getStar_by_stdNO.show
+    // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+    var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
+    println("sbjtCD : " + sbjtCD)
+
+    var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+
+    getStar_temp1.show
+    // if(getStar_temp1.count == 0){
+    //    -1
+    // }
+
+  }
 
   var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(arr01(s).toString)
 
@@ -256,7 +278,6 @@ for(s<-0 until sbjtCD_star_byStd_Map.size){
 
   orderedIdx_byStd = orderedIdx_byStd.sorted
   println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
-
 
   for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
     var k=0;

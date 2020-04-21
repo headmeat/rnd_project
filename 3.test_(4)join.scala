@@ -104,8 +104,8 @@ var sbjtNM_by_stdNO3 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${st
 
 
 //==================================================일단 계산ㅇ ㅣ너무 느리니까 다른 방법으로,,=======================================
+// var sbjt_tuples = Seq[(String,  List[Double])]()
 var sbjt_tuples = Seq[(String, String)]()
-
 // 학번이 1452개 -> distinct 지정 -> 223 명
 var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
 
@@ -177,6 +177,7 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
   }
 
   val getStar_List = getStar_List_temp1.map(_._2).toString
+  // val getStar_List = getStar_List_temp1.map(x => x.toString.toDouble)
   println(getStar_List)
   sbjt_tuples = sbjt_tuples :+ (stdNO, getStar_List)
 }
@@ -477,7 +478,21 @@ arr02.foreach{ stdNO =>
   //광홍과 201937039학생이 수행한 활동만 260개이고 나머지 광홍과 학생들의 데이터는 존재하지 않음
 
   //이제 코드 3개에 대해 groupby와 agg 연산을 사용하여 코드 별로 count
-  var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
+  // var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
+  val maps = scala.collection.mutable.Map[String, Int]()
+
+  for(i<-0 until depart_code_list.size){
+  	maps(depart_code_list(i).toString) = 0
+  }
+
+  val s = outAct_code_temp3.collect
+
+  for(i<-0 until s.size){
+  	maps(s(i)(0).toString) = s(i)(1).toString.toInt
+  }
+  val maps_ = maps.toSeq.sortBy(_._1).toMap
+  val head = maps_.values.toList
+
   //------------------------------------------------------------------------------
 
   //---------------------자율활동 name list(자격증01, 어학02)----------------------
@@ -487,13 +502,13 @@ arr02.foreach{ stdNO =>
   var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
 
   var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
-  println(outAct_name_List)
+  println("outAct_name====>" + outAct_name_List)
   // var t_size = outAct_name_List.length
   // if(t_size > 0) {
     // println(s"##### SIZE : ${t_size} RESULT => " + outAct_name_List)
   // }
 
-  depart_activity_temp = depart_activity_temp ++ outAct_name_List
+  depart_activity_temp = depart_activity_temp :: outAct_name_List
 
   //----------codeList + nameList = 학생 하나의 리스트-----------------------------
   // var outAct_std_List = outAct_code_List ::: outAct_name_List
@@ -502,7 +517,7 @@ arr02.foreach{ stdNO =>
 
   //학과 리스트
   var depart_activity_List = depart_activity_temp.distinct
-  println(depart_activity_List)
+  println("depart::::::::::::" + depart_activity_List)
 
   //namelist로 유무 비교
   //학생 name list 랑 학과 list를 비교해서 contain으로 1, 0
@@ -524,12 +539,15 @@ arr02.foreach{ stdNO =>
     activity_List_byStd_temp2
   }
   var activity_List_byStd_temp3 = activity_List_byStd_temp1.map(_._2)
-  println("activity_List_byStd:" + activity_List_byStd_temp3)
+
+  println("activity_List_byStd: " + activity_List_byStd_temp3)
+
   //학과 리스트를 돌면서 일치 여부 세는데
   //봉사03, 대외04, 기관05 = 횟수 count
   //자격증01, 어학02 = 유무(1 또는 0)
 
- activity_List_byStd = outAct_code_List ++ activity_List_byStd_temp3
+ // activity_List_byStd = outAct_code_List ++ activity_List_byStd_temp3
+ activity_List_byStd = head ++ activity_List_byStd_temp3
 
  //학생 별 코드 횟수, 이름 유무 리스트 출력
  println(stdNO)
