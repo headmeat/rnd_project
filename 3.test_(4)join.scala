@@ -110,7 +110,7 @@ arr02.foreach{ stdNO =>
 
     val isListened =
       if(student_have_sbjt_List.contains(name)) {
-        1
+        -1
       }
       else 0
     val isListened_List_temp2 = (name, isListened)
