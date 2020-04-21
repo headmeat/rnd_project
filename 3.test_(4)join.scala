@@ -17,7 +17,8 @@
 // 3-1 학과 이름으로 과에 있는 학생들이 수강한 교과목을 리스트로 저장
 // 3-2 학과 이름으로 과에서 개설된 교과목을 리스트로 저장
 //
-var std_NO = 20142820
+// var std_NO = 20142820
+var std_NO = 20152611
 // 컴공과 데이터 목록 |20142820||20142932| |20152611|
 //--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명, 교과목코드-------------------------
 // var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
@@ -181,6 +182,169 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
   println(getStar_List)
   sbjt_tuples = sbjt_tuples :+ (stdNO, getStar_List)
 }
+
+
+
+
+
+//------------------------------------------------------------------------
+
+var arr01 = Array(20142820, 20142932, 20152611)
+
+
+case class starPoint(sbjtCD:String, starpoint:Any)
+val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
+
+
+val cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
+
+//STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
+val cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
+//
+// val sbjtCD_star_Array = Array[String, Double]
+// val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
+//
+
+val sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
+  // 학번 별 학번-교과코드-별점
+  val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
+  // star_temp_bystdNO_DF.show
+  // var sbjtcd_star_temp =
+
+  val res =
+    star_temp_bystdNO_DF
+    .collect // dataframe 를 collect 해서 array[row] 를 받음
+    .map(record => (record(0).toString, starPoint(record(1).toString, record(2).toString)))
+    // 각 row에 대해서 (학번, starPoint 객체) 로 바꿈
+    .groupBy(x => x._1) // 이걸 하면 데이터 타입이 맵(학번, )
+    .map( x => (x._1, x._2.map(x => x._2)))
+    // 그룹바이를 학번으로 해서 (학번, Array)
+  res
+}.toMap
+
+sbjtCD_star_byStd_Map
+
+var sbjt_tuples = Seq[(String, List[Double])]()
+
+for(s<-0 until sbjtCD_star_byStd_Map.size){
+  var star_point_List = List[Any]() // 학번당 별점을 저장
+  var orderedIdx_byStd = List[Int]() //학번 당 교과 리스트
+
+
+
+  for(i<-0 until sbjtCD_in_departNM_List.size){
+    //
+    // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
+    // // var star_key_id = "AAM00351"
+    //
+    // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+    // var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
+    // var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+    //
+    // // if(getStar_temp1.count == 0){
+    // //    star_point_List = -1.0::star_point_List
+    // // }else{
+      star_point_List = 0.0::star_point_List
+      println(star_point_List)
+    // }
+  }
+
+  // 
+  //
+  // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
+  //    val str = row.toString
+  //    val size = str.length
+  //    val res = str.substring(1, size-1).split(",")
+  //    val list_ = res(0)
+  //    list_})
+  //
+  // var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
+
+
+
+
+  for(i<-0 until sbjtNM_by_stdNO_List.size){
+
+    var student_have_sbjt_temp1 = sbjtCD_in_departNM.filter(sbjtCD_in_departNM("STD_NO").equalTo(s"${arr01(s)}"))
+    // var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
+    var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KEY_CD"))
+    // student_have_sbjt_temp2.show
+    //
+    // var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${arr01(s)}").select(col("SBJT_KEY_CD"))
+    // var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
+    //
+    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
+    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(0)}")).select("STAR_KEY_ID").collect
+
+    // var star_key_id = "AAM00351"
+    // getStar_by_stdNO.show
+    // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+    var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
+    println("sbjtCD : " + sbjtCD)
+
+    var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+
+    //
+    // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
+    //    val str = row.toString
+    //    val size = str.length
+    //    val res = str.substring(1, size-1).split(",")
+    //    val list_ = res(0)
+    //    list_})
+    //
+    // var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
+
+    // getStar_temp1.show
+    // if(getStar_temp1.count == 0){
+    //    -1
+    // }
+
+  }
+
+  var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(arr01(0).toString) //!
+
+  for(i<-0 until valueBystdNo_from_Map.size){
+    //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
+    //학생 한명이 들은 중분류 리스트를 가져옴
+    orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(valueBystdNo_from_Map(i).sbjtCD)::orderedIdx_byStd
+    println("orderedIdx_byStd ===> " + orderedIdx_byStd)
+  }
+
+  for(i<-0 until )
+
+
+
+
+
+  orderedIdx_byStd = orderedIdx_byStd.sorted
+  println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
+
+  for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
+    var k=0;
+    //print(k)
+    // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
+    while(sbjtCD_in_departNM_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).sbjtCD){
+    k+=1;
+    }
+    // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
+    star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
+
+    // println(s"$star_point_List")
+  }
+
+  val star_list = star_point_List.map(x => x.toString.toDouble)
+  println(">>"+star_list)
+  sbjt_tuples = sbjt_tuples :+ (arr01(s).toString, star_list)
+
+}
+
+
+
+
+
+
+
 
 var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT")
 
