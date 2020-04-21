@@ -509,6 +509,12 @@ val join_df = join_df_temp.join(act_df, Seq("STD_NO"), "outer")
 
 join_df.show
 
+setMongoDF(spark, join_df)
+
+var userSimilarity_df = userSimilarity_table
+
+var row1 = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo("20153128"))
+var row1_temp = row1.collect.toList
 
 
 // val join_df_temp = sbjt_df.join(ncr_df, sbjt_df("STD_NO") === ncr_df("STD_NO"), "outer")

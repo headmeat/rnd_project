@@ -103,7 +103,7 @@ arr02.foreach{ stdNO =>
     //리턴하려면 이름을 쳐야 함
     //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
     activity_List_byStd_temp2
-  }
+
   var activity_List_byStd_temp3 = activity_List_byStd_temp1.map(_._2)
   println("activity_List_byStd:" + activity_List_byStd_temp3)
   //학과 리스트를 돌면서 일치 여부 세는데

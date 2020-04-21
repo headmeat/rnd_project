@@ -82,6 +82,9 @@ var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"$
 //학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
 var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}")).toDF
 
+// from. 비교과 신청학생 테이블 : 학번, 비교과 KEYID
+var ncrStdInfoUri_DF = ncrStdInfoUri_table.select(col("NPS_STD_NO"), col("NPI_KEY_ID"))
+
 //---------------------------<학생 한명의 비교과중분류 별 별점평균 데이터프레임 생성>----------------------------------------
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
 // var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
@@ -271,6 +274,7 @@ for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for�
     star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
   }
   //arr01(s).toString : 학번
+
   ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_point_List.toString)
 
 }

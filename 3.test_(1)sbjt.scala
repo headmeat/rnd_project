@@ -43,6 +43,36 @@ var sbjtCD_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(
 //학과별 교과목코드와 학생의 교과목 코드를 인덱스 비교 하기 위해 정렬함(sorted)
 var sbjtCD_in_departNM_List = sbjtCD_in_departNM.rdd.map(r=>r(0).toString).collect.toList.distinct.sorted
 
+//학과의 모든 학번(key)이 들은 교과목코드-별점 Map
+
+case class starPoint(sbjtCD:String, starpoint:Any)
+
+val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
+
+
+
+
+
+//학생 하나의
+var star_temp = starPoint(교과목코드, 별점)
+//Map 형태로 학번이 교과목코드-별점을 가리키도록
+
+학번 교과목코드 별점 DF
+Map
+
+var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
+
+//STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
+var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
+
+var sbjtCD_star_Array = Array[String, Double]
+val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
+
+var stdNo_sbjtCD_star_DF1 =
+
+
+
 
 
 /*
@@ -107,7 +137,6 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
 
   // 학과 전체 교과목 리스트를 순회 (교과, 0)으로 만들어놓음
 
-
   val getStar_List_temp1 = sbjtCD_in_departNM_List.map(x => (x, 0)).map{ record =>
     // println(s"stdNO : ${stdNO} ============= sbjtNM : ${record}")
     //
@@ -121,11 +150,7 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
     val sbjtCD = record._1
 
     val getStar =
-
-      //#########################조건바꾸기########################
       if(student_have_sbjt_List.contains(sbjtCD)) {
-      //#########################조건바꾸기########################
-
         var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
         // var star_key_id = "AAM00351"
 
@@ -146,41 +171,67 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
     getStar_List_temp2
   }
 
-  //------------------------변경하려고 햇던 부분..--------------------------
-  // var star_point_List = List[Any]() // 학번당 별점을 저장
-  // var orderedIdx_byStd = List[Int]() //학번 당 중분류 리스트
-  // //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 초기화
-  //   var student_have_sbjt_List = student_have_sbjt_temp2.select("SBJT_KEY_CD").rdd.map(r=>r(0).toString).collect.toList.distinct.sorted
-  // for(i<-0 until sbjtCD_in_departNM_List.size){
-  //   star_point_List = 0.0::star_point_List
-  // }
-  // //Map연산을 위해 학번을 string으로 변환(arr01(s).toString)
-  // // 학번당 중분류를 orderedIdx_byStd에 넣음
-  // //i : 학번 하나가 가진 중분류 개수만큼 반복
-  //
-  // //학과 모든 학생의 중분류-별점 Map 에서 학번 하나의 값(중분류-별점)을 가져옴(Map연산을 위해 toString으로 변환)
-  //
-  // for(i<-0 until student_have_sbjt_List.size){
-  //   //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : student_have_sbjt_List(i).subcd)
-  //   //학생 한명이 들은 중분류 리스트를 가져옴
-  //   orderedIdx_byStd = subcd_byDepart_List.indexOf(student_have_sbjt_List(i))::orderedIdx_byStd
-  // }
-  // orderedIdx_byStd = orderedIdx_byStd.sorted
-  // //################################################################################
-  // for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
-  //   var k=0;
-  //   //print(k)
-  //   // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-  //   while(subcd_byDepart_List(orderedIdx_byStd(i))!= student_have_sbjt_List(k)){
-  //   k+=1;
-  //   }
-  //   // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-  //
-  //   star_point_List = star_point_List.updated(orderedIdx_byStd(i), student_have_sbjt_List(k).starpoint)
-  // }
-  //------------------------변경하려고 햇던 부분..--------------------------
-
-  sbjt_tuples = sbjt_tuples :+ (stdNO, star_point_List)
+  val getStar_List = getStar_List_temp1.map(_._2).toString
+  println(getStar_List)
+  sbjt_tuples = sbjt_tuples :+ (stdNO, getStar_List)
 }
+
+
+
+var arr01 = Array(20142820, 20142932, 20152611)
+
+
+case class starPoint(sbjtCD:String, starpoint:Any)
+val sbjtCD_star_byStd_Map = collection.mutable.Map[String, starPoint]()
+
+
+
+val cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
+
+//STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
+val cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
+
+val sbjtCD_star_Array = Array[String, Double]
+val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
+
+
+
+arr01.foreach { stdNO =>
+
+  // 학번 별 학번-교과코드-별점
+  val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
+  // star_temp_bystdNO_DF.show
+
+  // var sbjtcd_star_temp =
+  star_temp_bystdNO_DF.collect.map{record =>
+
+    val key = record(0)
+    println(key)
+    val starP = starPoint(record(1).toString, record(2).toString)
+    println(starP)
+
+    val sbjtcd_star_record = (stdNO.toString, starP)
+    println(sbjtcd_star_record)
+
+    sbjtCD_star_byStd_Map += (sbjtcd_star_record)
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT_STAR")
