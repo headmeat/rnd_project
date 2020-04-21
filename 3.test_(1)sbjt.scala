@@ -57,8 +57,8 @@ val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
 var star_temp = starPoint(교과목코드, 별점)
 //Map 형태로 학번이 교과목코드-별점을 가리키도록
 
-학번 교과목코드 별점 DF
-Map
+// 학번 교과목코드 별점 DF
+// Map
 
 var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
 // 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
@@ -69,7 +69,7 @@ var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")
 var sbjtCD_star_Array = Array[String, Double]
 val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
 
-var stdNo_sbjtCD_star_DF1 =
+// var stdNo_sbjtCD_star_DF1 =
 
 
 
@@ -157,10 +157,15 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
         //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
 
         var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
-        var getStar_temp2 = getStar_temp1.collect().map(_.getDouble(0)).mkString("")
-        // println("-------------------")
-        // println(temp)
-        getStar_temp2
+        if(getStar_temp1.count == 0){
+           -1
+        }else{
+          var getStar_temp2 = getStar_temp1.collect().map(_.getDouble(0)).mkString("")
+          // println("-------------------")
+          // println(temp)
+          getStar_temp2
+        }
+
       }
       else 0
 
@@ -176,69 +181,4 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
   sbjt_tuples = sbjt_tuples :+ (stdNO, getStar_List)
 }
 
-
-
-var arr01 = Array(20142820, 20142932, 20152611)
-
-
-case class starPoint(sbjtCD:String, starpoint:Any)
-val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
-
-
-
-val cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
-// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
-
-//STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
-val cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
-
-val sbjtCD_star_Array = Array[String, Double]
-val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
-
-
-
-val temp001 = arr01.flatMap{ stdNO =>
-
-  // 학번 별 학번-교과코드-별점
-  val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
-  // star_temp_bystdNO_DF.show
-  // var sbjtcd_star_temp =
-
-  val res =
-    star_temp_bystdNO_DF
-    .collect // dataframe 를 collect 해서 array[row] 를 받음
-    .map(record => (record(0).toString, starPoint(record(1).toString, record(2).toString)))
-    // 각 row에 대해서 (학번, starPoint 객체) 로 바꿈
-    .groupBy(x => x._1) // 이걸 하면 데이터 타입이 맵(학번, )
-    .map( x => (x._1, x._2.map(x => x._2)))
-    // 그룹바이를 학번으로 해서 (학번, Array)
-
-  // star_temp_bystdNO_DF.collect.map{record =>
-  //   val key = record(0)
-  //   println(key)
-  //   val starP = starPoint(record(1).toString, record(2).toString)
-  //   println(starP)
-  //   val sbjtcd_star_record = (stdNO.toString, starP)
-  //   println(sbjtcd_star_record)
-  //   sbjtCD_star_byStd_Map += (sbjtcd_star_record)
-  // }
-  res
-}.toMap
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT_STAR")
+var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT")
