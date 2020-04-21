@@ -193,7 +193,7 @@ var arr01 = Array(20142820, 20142932, 20152611)
 
 
 case class starPoint(sbjtCD:String, starpoint:Any)
-val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
+var sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
 
 
 val cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
@@ -206,7 +206,7 @@ val cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")
 // val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
 //
 
-val sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
+var sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
   // 학번 별 학번-교과코드-별점
   val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
   // star_temp_bystdNO_DF.show
@@ -223,102 +223,53 @@ val sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
   res
 }.toMap
 
-sbjtCD_star_byStd_Map
-
 var sbjt_tuples = Seq[(String, List[Double])]()
 
 for(s<-0 until sbjtCD_star_byStd_Map.size){
   var star_point_List = List[Any]() // 학번당 별점을 저장
   var orderedIdx_byStd = List[Int]() //학번 당 교과 리스트
-
-
+  var not_orderedIdx_byStd = List[Int]()
 
   for(i<-0 until sbjtCD_in_departNM_List.size){
-    //
-    // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
-    // // var star_key_id = "AAM00351"
-    //
-    // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
-    // var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
-    // var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
-    //
-    // // if(getStar_temp1.count == 0){
-    // //    star_point_List = -1.0::star_point_List
-    // // }else{
       star_point_List = 0.0::star_point_List
-      println(star_point_List)
-    // }
   }
+  // var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
 
-  // 
-  //
-  // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
-  //    val str = row.toString
-  //    val size = str.length
-  //    val res = str.substring(1, size-1).split(",")
-  //    val list_ = res(0)
-  //    list_})
-  //
-  // var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
+  var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${arr01(s)}")).select(col("SBJT_KEY_CD"))
+  var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
+  var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
+     val str = row.toString
+     val size = str.length
+     val res = str.substring(1, size-1).split(",")
+     val list_ = res(0)
+     list_})
 
+  var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
 
-
-  for(i<-0 until sbjtNM_by_stdNO_List.size){
-
-    var student_have_sbjt_temp1 = sbjtCD_in_departNM.filter(sbjtCD_in_departNM("STD_NO").equalTo(s"${arr01(s)}"))
-    // var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
-    var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KEY_CD"))
-    // student_have_sbjt_temp2.show
-    //
-    // var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${arr01(s)}").select(col("SBJT_KEY_CD"))
-    // var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
-    //
-    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
-    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(0)}")).select("STAR_KEY_ID").collect
-
-    // var star_key_id = "AAM00351"
-    // getStar_by_stdNO.show
-    // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
-    var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
-    println("sbjtCD : " + sbjtCD)
-
-    var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
-
-    //
-    // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
-    //    val str = row.toString
-    //    val size = str.length
-    //    val res = str.substring(1, size-1).split(",")
-    //    val list_ = res(0)
-    //    list_})
-    //
-    // var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
-
-    // getStar_temp1.show
-    // if(getStar_temp1.count == 0){
-    //    -1
-    // }
-
-  }
-
-  var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(arr01(0).toString) //!
+  var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(arr01(s).toString) //!
 
   for(i<-0 until valueBystdNo_from_Map.size){
     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
     //학생 한명이 들은 중분류 리스트를 가져옴
     orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(valueBystdNo_from_Map(i).sbjtCD)::orderedIdx_byStd
-    println("orderedIdx_byStd ===> " + orderedIdx_byStd)
+    // println("orderedIdx_byStd ===> " + orderedIdx_byStd)
   }
 
-  for(i<-0 until )
-
-
-
-
+  for(i<-0 until not_rated.size){
+    not_orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(not_rated(i).toString)::not_orderedIdx_byStd
+    // println("not_orderedIdx_byStd ===> " + not_orderedIdx_byStd)
+  }
 
   orderedIdx_byStd = orderedIdx_byStd.sorted
-  println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
+  // println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
+
+  not_orderedIdx_byStd = not_orderedIdx_byStd.sorted
+  println("not_orderedIdx_byStd ===>" + not_orderedIdx_byStd)
+
+  for(i<-0 until not_orderedIdx_byStd.size){
+    star_point_List = star_point_List.updated(not_orderedIdx_byStd(i), -1)
+  }
 
   for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
     var k=0;
