@@ -95,8 +95,7 @@ val sjobInfoUri_table =  getMongoDF(spark, sjobInfoUri)  //채용정보 신청 �
 
 
 val deptInfoUri_table =  getMongoDF(spark, deptInfoUri)  //학과 정보 (department info)
-val
- =  getMongoDF(spark, clPassUri) //교과목 수료(class pass)
+val clPassUri_table =  getMongoDF(spark, clPassUri) //교과목 수료(class pass)
 val stInfoUri_table =  getMongoDF(spark, stInfoUri)  //학생 정보 (student info)
 val pfInfoUri_table =  getMongoDF(spark, pfInfoUri)  //교수 정보 (professor info)
 val clInfoUri_table =  getMongoDF(spark, clInfoUri)  //교과 정보 (class info)

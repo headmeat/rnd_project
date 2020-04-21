@@ -32,14 +32,47 @@ var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s
 var stdNO_in_departNM_List = stdNO_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
 
 // 3-1. 학생의 수업 리스트
-var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KOR_NM"))
+// var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KOR_NM"))
+var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KEY_CD"))
 var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
 
 // 3-2. 학과의 수업 리스트
 // 컴퓨터공학과에서 개설된 수업명을 리스트로 생성 : 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
-var sbjtNM_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KOR_NM", "STD_NO")
-var sbjtNM_in_departNM_List = sbjtNM_in_departNM.rdd.map(r=>r(0)).collect.toList.distinct
+var sbjtCD_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select("SBJT_KEY_CD", "STD_NO")
+//학과별 교과목코드와 학생의 교과목 코드를 인덱스 비교 하기 위해 정렬함(sorted)
+var sbjtCD_in_departNM_List = sbjtCD_in_departNM.rdd.map(r=>r(0).toString).collect.toList.distinct.sorted
+
+//학과의 모든 학번(key)이 들은 교과목코드-별점 Map
+
+case class starPoint(sbjtCD:String, starpoint:Any)
+
+val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
+
+
+
+
+
+//학생 하나의
+var star_temp = starPoint(교과목코드, 별점)
+//Map 형태로 학번이 교과목코드-별점을 가리키도록
+
+학번 교과목코드 별점 DF
+Map
+
+var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
+
+//STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
+var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
+
+var sbjtCD_star_Array = Array[String, Double]
+val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
+
+var stdNo_sbjtCD_star_DF1 =
+
+
+
 
 
 /*
@@ -68,47 +101,6 @@ var sbjtNM_by_stdNO3 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${st
 // --------------------------------------------별점 추가하기 끝---------------------------------------------
 */
 
-// from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
-var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
-
-// 비교과 별점 => 별점 테이블에서 "TYPE"이 "N" :: ex) NCR000000000677
-var cpsStarUri_ncr_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("N"))
-// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
-var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C"))
-
-// 학번 별 과목 ID, 별점을 가져감
-var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${std_NO}")).show
-
-
-
-
-
-//-----------------------------------------------학생 한명----------------------------------------------------
-var student_have_sbjt_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
-var student_have_sbjt_temp2 = student_have_sbjt_temp1.filter(student_have_sbjt_temp1("STD_NO").equalTo(s"${std_NO}"))
-var student_have_sbjt_temp3 = student_have_sbjt_temp2.select(col("SBJT_KOR_NM"))
-
-//@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
-var student_have_sbjt_List = student_have_sbjt_temp3.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
-
-val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
-  //x : record_1
-  //0 : record_2
-  //isListend면 1로 바뀜
-  val name = record._1
-  val isListened =
-    if(student_have_sbjt_List.contains(name)) {
-      1
-    }
-    else 0
-  val isListened_List_temp2 = (name, isListened)
-  print(isListened_List_temp2)
-  //리턴하려면 이름을 쳐야 함
-  //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
-  isListened_List_temp2
-}
-val isListened_List = isListened_List_temp1.map(_._2)
-//-----------------------------------------------=----------------------------------------------------------------
 
 
 //==================================================일단 계산ㅇ ㅣ너무 느리니까 다른 방법으로,,=======================================
@@ -117,43 +109,129 @@ var sbjt_tuples = Seq[(String, String)]()
 // 학번이 1452개 -> distinct 지정 -> 223 명
 var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
 
-val arr01 = Array(20142820, 20142932, 20152611)
-var arr02 = arr01.toList.map(_.toString)
+val stdNO_sbjt_temp1 = Array(20142820, 20142932, 20152611)
+val stdNO_sbjt_temp2 = stdNO_sbjt_temp1.toList.map(_.toString)
 
-arr02.foreach{ stdNO =>
+stdNO_sbjt_temp2.foreach{ stdNO =>
 
   // 학생별로 (stdNO) 들은 교과목 테이블
-  var student_have_sbjt_temp1 = sbjtNM_in_departNM.filter(sbjtNM_in_departNM("STD_NO").equalTo(s"${stdNO}"))
-  var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
-  student_have_sbjt_temp2.show
+  var student_have_sbjt_temp1 = sbjtCD_in_departNM.filter(sbjtCD_in_departNM("STD_NO").equalTo(s"${stdNO}"))
+  // var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
+  var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KEY_CD"))
+  // student_have_sbjt_temp2.show
+
+  // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
+  var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+
+  // 비교과 별점 => 별점 테이블에서 "TYPE"이 "N" :: ex) NCR000000000677
+  var cpsStarUri_ncr_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("N"))
+  // 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
+  var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C"))
+
+  // 학번 별 과목 ID, 별점을 가져감
+
+  // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${20142820}"))
+  // var star_key_id = "AAM00351"
+  // var getStar = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${star_key_id}")).select(col("STAR_POINT"))
+  // var temp = getStar.collect().map(_.getDouble(0)).mkString("")
 
   // 학과 전체 교과목 리스트를 순회 (교과, 0)으로 만들어놓음
-  val isListened_List_temp1 = sbjtNM_List.map(x => (x, 0)).map{ record =>
+
+  val getStar_List_temp1 = sbjtCD_in_departNM_List.map(x => (x, 0)).map{ record =>
     // println(s"stdNO : ${stdNO} ============= sbjtNM : ${record}")
     //
     //@@@ 컴퓨터공학과의 학생 한명이 수강한 수업 리스트를 생성
-    var student_have_sbjt_List = student_have_sbjt_temp2.select("SBJT_KOR_NM").rdd.map(r=>r(0)).collect.toList.distinct
+    //학과별 교과목코드와 학생의 교과목 코드를 인덱스 비교 하기 위해 정렬함(sorted)
+    var student_have_sbjt_List = student_have_sbjt_temp2.select("SBJT_KEY_CD").rdd.map(r=>r(0).toString).collect.toList.distinct.sorted
     // println(s"student_have_sbjt_List--${student_have_sbjt_List}")
     //x : record_1
     //0 : record_2
     //isListend면 1로 바뀜
-    val name = record._1
+    val sbjtCD = record._1
 
-    val isListened =
-      if(student_have_sbjt_List.contains(name)) {
-        1
+    val getStar =
+      if(student_have_sbjt_List.contains(sbjtCD)) {
+        var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
+        // var star_key_id = "AAM00351"
+
+        //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+
+        var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+        var getStar_temp2 = getStar_temp1.collect().map(_.getDouble(0)).mkString("")
+        // println("-------------------")
+        // println(temp)
+        getStar_temp2
       }
       else 0
-    val isListened_List_temp2 = (name, isListened)
+
+    val getStar_List_temp2 = (sbjtCD, getStar)
     // print(isListened_List_temp2)
     //리턴하려면 이름을 쳐야 함
     //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
-    isListened_List_temp2
+    getStar_List_temp2
   }
-  val isListened_List = isListened_List_temp1.map(_._2).toString
-  println(isListened_List)
 
-  sbjt_tuples = sbjt_tuples :+ (stdNO, isListened_List)
+  val getStar_List = getStar_List_temp1.map(_._2).toString
+  println(getStar_List)
+  sbjt_tuples = sbjt_tuples :+ (stdNO, getStar_List)
 }
 
-var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT")
+
+
+var arr01 = Array(20142820, 20142932, 20152611)
+
+
+case class starPoint(sbjtCD:String, starpoint:Any)
+val sbjtCD_star_byStd_Map = collection.mutable.Map[String, starPoint]()
+
+
+
+val cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
+
+//STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
+val cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
+
+val sbjtCD_star_Array = Array[String, Double]
+val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
+
+
+
+arr01.foreach { stdNO =>
+
+  // 학번 별 학번-교과코드-별점
+  val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
+  // star_temp_bystdNO_DF.show
+
+  // var sbjtcd_star_temp =
+  star_temp_bystdNO_DF.collect.map{record =>
+
+    val key = record(0)
+    println(key)
+    val starP = starPoint(record(1).toString, record(2).toString)
+    println(starP)
+
+    val sbjtcd_star_record = (stdNO.toString, starP)
+    println(sbjtcd_star_record)
+
+    sbjtCD_star_byStd_Map += (sbjtcd_star_record)
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT_STAR")

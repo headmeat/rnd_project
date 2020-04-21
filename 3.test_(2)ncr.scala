@@ -82,6 +82,9 @@ var showDepart_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"$
 //학번으로 별점 가져오기 (dataframe) => 학생 한 명에 대한 별점
 var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}")).toDF
 
+// from. 비교과 신청학생 테이블 : 학번, 비교과 KEYID
+var ncrStdInfoUri_DF = ncrStdInfoUri_table.select(col("NPS_STD_NO"), col("NPI_KEY_ID"))
+
 //---------------------------<학생 한명의 비교과중분류 별 별점평균 데이터프레임 생성>----------------------------------------
 // 학생 한 명에 대해서 별점테이블을 조회해서 교과/비교과 관련 활동 KEY_ID를 가져옴 => List 생성
 // var key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${std_NO2}"))
@@ -145,6 +148,9 @@ var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
 val arr01 = Array(20142820, 20142932, 20152611)
 
+val stdNO_ncr_temp1 = Array(20142820, 20142932, 20152611)
+val stdNO_ncr_temp2 = stdNO_sbjt_temp1.toList.map(_.toString)
+
 arr01.foreach{ stdNO =>
   val key_id_temp = cpsStarUri_ncr_DF.select(col("STAR_KEY_ID")).filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
   val key_id_List_byStd = key_id_temp.rdd.map{r=> r(0)}.collect.toList
@@ -153,6 +159,7 @@ arr01.foreach{ stdNO =>
     // var std_NO3 = 20142932 // 5게
     // 프로그램 id : NCR000000000694, NCR000000000723, NCR000000000731, NCR000000000737, NCR000000000743
     // 중분류 code : NCR_T01_P03_C01, NCR_T01_P01_C01, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P01_C03
+    var getStar_by_stdNO = cpsStarUri_DF.filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}")).toDF
     val subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
     val star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("STAR_KEY_ID")).filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${keyid}"))
 
@@ -209,7 +216,7 @@ arr01.foreach{ stdNO =>
  val xres = s"result stdno : ${stdNO} size : ${t1.length} ==--------------------> ${t1}"
  myResStr = myResStr.concat("\n"+xres)
 
-subcd_byDepart_List = t1
+subcd_byDepart_List = t1.sorted
 } //학번 루프 끝
 
 
@@ -225,41 +232,51 @@ subcd_star_byStd_Map
 //----------------------------------------------------------------------------------------------------------------------------
 
 val arr01 = Array(20142820, 20142932, 20152611)
-
+//
 subcd_star_byStd_Map("20142932")(0).subcd
 subcd_star_byStd_Map("20142932")(0).starpoint
-var sub_cd = List[Any]()
-var star_point = List[Any]()
-var star_point_list = List[Any]()
 
-var names = List[String]()
+//최종적인 학번 별 별점 리스트 값이 들어있는 시퀀스
 var ncr_tuples = Seq[(String, String)]()
 
 for(s<-0 until subcd_star_byStd_Map.size){ // 학과 학생 학번 List 를 for문
-  var star_point = List[Any]() // 학번당 별점을 저장
-  var order = List[Int]() //
-  for(i<-0 until subcd_byDepart_List.size){ //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 셋팅
-    star_point = 0.0::star_point
+  var star_point_List = List[Any]() // 학번당 별점을 저장
+  var orderedIdx_byStd = List[Int]() //학번 당 중분류 리스트
+  //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 초기화
+  for(i<-0 until subcd_byDepart_List.size){
+    star_point_List = 0.0::star_point_List
   }
+  //Map연산을 위해 학번을 string으로 변환(arr01(s).toString)
+  // 학번당 중분류를 orderedIdx_byStd에 넣음
+  //i : 학번 하나가 가진 중분류 개수만큼 반복
 
-  for(i<-0 until subcd_star_byStd_Map(arr01(s).toString).size){ // 학번당 중분류를 order에 넣음
-    order = subcd_byDepart_List.indexOf(subcd_star_byStd_Map(arr01(s).toString)(i).subcd)::order
-    //names = subcd_star_byStd_Map(arr01(s).toString)(i).subcd::names
+  //학과 모든 학생의 중분류-별점 Map 에서 학번 하나의 값(중분류-별점)을 가져옴(Map연산을 위해 toString으로 변환)
+  var valueBystdNo_from_Map = subcd_star_byStd_Map(arr01(s).toString)
+
+  for(i<-0 until valueBystdNo_from_Map.size){
+    //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
+    //학생 한명이 들은 중분류 리스트를 가져옴
+    orderedIdx_byStd = subcd_byDepart_List.indexOf(valueBystdNo_from_Map(i).subcd)::orderedIdx_byStd
+    println("orderedIdx_byStd ===> " + orderedIdx_byStd)
   }
+  // orderedIdx_byStd를 정렬(중분류 코드 정렬)
+  orderedIdx_byStd = orderedIdx_byStd.sorted
+  println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
 
-  order = order.sorted // order를 정렬
-
-  for(i<-0 until order.size){ // order 크기 (학번당 들은 중분류를 for문 돌림)
+  for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
     var k=0;
     //print(k)
     // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-    while(subcd_byDepart_List(order(i))!=subcd_star_byStd_Map(arr01(s).toString)(k).subcd){
+    while(subcd_byDepart_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).subcd){
     k+=1;
     }
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-    star_point = star_point.updated(order(i), subcd_star_byStd_Map(arr01(s).toString)(k).starpoint)
+    star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
   }
-  ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_point.toString)
+  //arr01(s).toString : 학번
+
+  ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_point_List.toString)
+
 }
 
 var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")
