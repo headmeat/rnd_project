@@ -435,6 +435,12 @@ var ncr_df = ncr_tuples.toDF("STD_NO", "RATING")
 
 import spark.implicits._
 
+val schema6 = StructType(
+    StructField("STAR_POINT", StringType, true) ::
+    StructField("NPI_KEY_ID", StringType, true) :: Nil)
+var star_subcd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema3)
+
+
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
 // var departNM = "광고홍보학과"
 var departNM = "컴퓨터공학과"
@@ -447,7 +453,8 @@ var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).
 var stdNO_in_departNM = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
 // var arr01 = Array(201937039, 20153128, 20132019)
-var arr01 = Array(20142820, 20142932, 20152611)
+// var arr01 = Array(20142820, 20142932, 20152611)
+var arr01 = Array(20142820)
 var arr02 = arr01.toList.map(_.toString)
 
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
@@ -467,10 +474,11 @@ arr02.foreach{ stdNO =>
   //List3 : List1 + List2 = 코드리스트 + 이름리스트 (학생 한명이 수행한 자율활동내용)
   //---------------------자율활동 code list(자격증01, 어학02)----------------------
   //5개의 코드 (학생 한명이 수행한 봉사03, 대외04, 기관05을 코드 별로 groupby count list)
-  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
+  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20142820}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
   //3개의 코드만 필터링
   var outAct_code_temp2 = outAct_code_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
   //학생 한명의 활동 코드만 존재하는 dataframe
+
   var outAct_code_temp3 = outAct_code_temp2.drop("OAM_STD_NO", "OAM_TITLE").groupBy("OAM_TYPE_CD").count()
 
   //모든 학과 모든 학생이 수행한 자율활동은 총 845개인데
@@ -478,6 +486,8 @@ arr02.foreach{ stdNO =>
 
   //이제 코드 3개에 대해 groupby와 agg 연산을 사용하여 코드 별로 count
   var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
+
+  println("Code====>" + outAct_code_List)
   //------------------------------------------------------------------------------
 
   //---------------------자율활동 name list(자격증01, 어학02)----------------------
@@ -512,6 +522,7 @@ arr02.foreach{ stdNO =>
     //0 : record_2
     //isListend면 1로 바뀜
     val actName = activity._1
+    println("actName ===> " + actName)
     val act =
       if(outAct_name_List.contains(actName)) {
         1
