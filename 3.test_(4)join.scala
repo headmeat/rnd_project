@@ -454,13 +454,13 @@ var arr02 = arr01.toList.map(_.toString)
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
 // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
 
-
+var depart_activity_temp = List[Any]()
+var depart_activity_List = List[Any]()
 var activity_List_byStd = List[Any]()
 var act_tuples = Seq[(String, String)]()
 //광홍과 학번을 돌면서
 arr02.foreach{ stdNO =>
 
-  var depart_activity_temp = List[Any]()
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
 
   //List1 : 코드(중복제거x) -> map 함수로 df에서 list 변환
@@ -492,12 +492,13 @@ arr02.foreach{ stdNO =>
   }
   val maps_ = maps.toSeq.sortBy(_._1).toMap
   val head = maps_.values.toList
+  print("head.size: " + head.size)
 
   //------------------------------------------------------------------------------
 
   //---------------------자율활동 name list(자격증01, 어학02)----------------------
   //5개의 코드
-  var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"), col("OAM_TITLE")).distinct
+  var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"), col("OAM_TITLE"), col("OAM_TYPE_CD")).distinct
   //3개의 코드만 필터링
   var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
 
@@ -508,7 +509,7 @@ arr02.foreach{ stdNO =>
     // println(s"##### SIZE : ${t_size} RESULT => " + outAct_name_List)
   // }
 
-  depart_activity_temp = depart_activity_temp :: outAct_name_List
+  depart_activity_temp = depart_activity_temp ++ outAct_name_List
 
   //----------codeList + nameList = 학생 하나의 리스트-----------------------------
   // var outAct_std_List = outAct_code_List ::: outAct_name_List
@@ -516,7 +517,7 @@ arr02.foreach{ stdNO =>
   //------------------------------------------------------------------------------
 
   //학과 리스트
-  var depart_activity_List = depart_activity_temp.distinct
+  depart_activity_List = depart_activity_temp.distinct
   println("depart::::::::::::" + depart_activity_List)
 
   //namelist로 유무 비교
