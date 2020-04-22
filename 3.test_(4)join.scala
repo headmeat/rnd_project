@@ -506,7 +506,7 @@ var arr02 = arr01.toList.map(_.toString)
 var depart_activity_temp = List[Any]()
 var depart_activity_List = List[Any]()
 var activity_List_byStd = List[Any]()
-var act_tuples = Seq[(String, String)]()
+var act_tuples = Seq[(String, List[Int])]()
 //광홍과 학번을 돌면서
 arr02.foreach{ stdNO =>
 
@@ -603,8 +603,11 @@ arr02.foreach{ stdNO =>
  println(stdNO)
  println("activity List !!! : " + activity_List_byStd)
 
- act_tuples = act_tuples :+ (stdNO, activity_List_byStd.toString)
+ val act_list = activity_List_byStd.map(x => x.toString.toInt)
+
+ act_tuples = act_tuples :+ (stdNO, act_list)
 }
+
 
 var act_df = act_tuples.toDF("STD_NO", "ACTING_COUNT")
 
