@@ -22,6 +22,12 @@ var std_NO = 20142820
 //--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명, 교과목코드-------------------------
 // var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
 
+// COLLUM NAMES ~~ //
+// val STD_NO = TABLE_INFO.STD_NO
+//
+// ...
+// COLLUM NAMES ~~ //
+
 // 2-1. 학과
 var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
 var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
@@ -245,7 +251,7 @@ for(s<-0 until sbjtCD_star_byStd_Map.size){
   }
   //
   for(i<-0 until sbjtNM_by_stdNO_List.size){
-  
+
     var student_have_sbjt_temp1 = sbjtCD_in_departNM.filter(sbjtCD_in_departNM("STD_NO").equalTo(s"${arr01(s)}"))
     // var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
     var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KEY_CD"))
