@@ -9760,3 +9760,11 @@ WARN  no build target: C:\rnd_project\3.test_(4)join.scala
 WARN  no build target: 
 INFO  shutting down Metals
 INFO  time: initialize in 0.29s
+WARN  no build tool detected in workspace 'C:\rnd_project'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. 
+WARN  no build target: C:\rnd_project\3.test_(4)join.scala
+WARN  no build target: C:\rnd_project\3.test_(3)act.scala
+WARN  no build target: C:\rnd_project\2.mongo_spark.scala
+WARN  no build target: C:\rnd_project\3.test_lhb.scala
+WARN  no build target: C:\rnd_project\3.test.scala
+WARN  no build target: C:\rnd_project\3.test_(2)ncr.scala
+WARN  no build target: C:\rnd_project\3.test_(1)sbjt.scala
