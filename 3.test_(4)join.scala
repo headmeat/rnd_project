@@ -17,7 +17,8 @@
 // 3-1 학과 이름으로 과에 있는 학생들이 수강한 교과목을 리스트로 저장
 // 3-2 학과 이름으로 과에서 개설된 교과목을 리스트로 저장
 //
-var std_NO = 20142820
+// var std_NO = 20142820
+var std_NO = 20152611
 // 컴공과 데이터 목록 |20142820||20142932| |20152611|
 //--------------------from. 교과목수료 테이블 V_STD_CDP_SUBJECT : 학과이름, 학번, 수업명, 교과목코드-------------------------
 // var studentNO = students_in_departNM.filter(students_in_departNM("STD_NO").equalTo(s"${std_NO}"))
@@ -104,8 +105,8 @@ var sbjtNM_by_stdNO3 = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${st
 
 
 //==================================================일단 계산ㅇ ㅣ너무 느리니까 다른 방법으로,,=======================================
+// var sbjt_tuples = Seq[(String,  List[Double])]()
 var sbjt_tuples = Seq[(String, String)]()
-
 // 학번이 1452개 -> distinct 지정 -> 223 명
 var stdNO_in_departNM = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.distinct
 
@@ -177,9 +178,173 @@ stdNO_sbjt_temp2.foreach{ stdNO =>
   }
 
   val getStar_List = getStar_List_temp1.map(_._2).toString
+  // val getStar_List = getStar_List_temp1.map(x => x.toString.toDouble)
   println(getStar_List)
   sbjt_tuples = sbjt_tuples :+ (stdNO, getStar_List)
 }
+
+
+
+
+
+//------------------------------------------------------------------------
+
+var arr01 = Array(20142820, 20142932, 20152611)
+
+
+case class starPoint(sbjtCD:String, starpoint:Any)
+val sbjtCD_star_byStd_Map = collection.mutable.Map[String, Array[starPoint]]()
+
+
+val cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+// 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
+
+//STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
+val cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
+//
+// val sbjtCD_star_Array = Array[String, Double]
+// val sbjtCD_star_Array = cpsStarUri_sbjt_DF.rdd.map{r=> r._1, r._2}.collect
+//
+
+val sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
+  // 학번 별 학번-교과코드-별점
+  val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
+  // star_temp_bystdNO_DF.show
+  // var sbjtcd_star_temp =
+
+  val res =
+    star_temp_bystdNO_DF
+    .collect // dataframe 를 collect 해서 array[row] 를 받음
+    .map(record => (record(0).toString, starPoint(record(1).toString, record(2).toString)))
+    // 각 row에 대해서 (학번, starPoint 객체) 로 바꿈
+    .groupBy(x => x._1) // 이걸 하면 데이터 타입이 맵(학번, )
+    .map( x => (x._1, x._2.map(x => x._2)))
+    // 그룹바이를 학번으로 해서 (학번, Array)
+  res
+}.toMap
+
+sbjtCD_star_byStd_Map
+
+var sbjt_tuples = Seq[(String, List[Double])]()
+
+for(s<-0 until sbjtCD_star_byStd_Map.size){
+  var star_point_List = List[Any]() // 학번당 별점을 저장
+  var orderedIdx_byStd = List[Int]() //학번 당 교과 리스트
+
+
+
+  for(i<-0 until sbjtCD_in_departNM_List.size){
+    //
+    // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
+    // // var star_key_id = "AAM00351"
+    //
+    // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+    // var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
+    // var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+    //
+    // // if(getStar_temp1.count == 0){
+    // //    star_point_List = -1.0::star_point_List
+    // // }else{
+      star_point_List = 0.0::star_point_List
+      println(star_point_List)
+    // }
+  }
+
+  //
+  //
+  // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
+  //    val str = row.toString
+  //    val size = str.length
+  //    val res = str.substring(1, size-1).split(",")
+  //    val list_ = res(0)
+  //    list_})
+  //
+  // var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
+
+
+
+
+  for(i<-0 until sbjtNM_by_stdNO_List.size){
+
+    var student_have_sbjt_temp1 = sbjtCD_in_departNM.filter(sbjtCD_in_departNM("STD_NO").equalTo(s"${arr01(s)}"))
+    // var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KOR_NM"))
+    var student_have_sbjt_temp2 = student_have_sbjt_temp1.select(col("SBJT_KEY_CD"))
+    // student_have_sbjt_temp2.show
+    //
+    // var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${arr01(s)}").select(col("SBJT_KEY_CD"))
+    // var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
+    //
+    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}"))
+    var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(0)}")).select("STAR_KEY_ID").collect
+
+    // var star_key_id = "AAM00351"
+    // getStar_by_stdNO.show
+    // //if문 추가 : 수강은 했는데 별점을 내리지 않은 경우에(-1) / 별점을 내린 경우(별점) / 수강하지 않은 경우(0)
+    var sbjtCD = sbjtCD_star_byStd_Map(s"${arr01(s)}")(i).sbjtCD
+    println("sbjtCD : " + sbjtCD)
+
+    var getStar_temp1 = getStar_by_stdNO.filter(getStar_by_stdNO("STAR_KEY_ID").equalTo(s"${sbjtCD}")).select(col("STAR_POINT"))
+
+    //
+    // var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
+    //    val str = row.toString
+    //    val size = str.length
+    //    val res = str.substring(1, size-1).split(",")
+    //    val list_ = res(0)
+    //    list_})
+    //
+    // var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
+
+    // getStar_temp1.show
+    // if(getStar_temp1.count == 0){
+    //    -1
+    // }
+
+  }
+
+  var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(arr01(0).toString) //!
+
+  for(i<-0 until valueBystdNo_from_Map.size){
+    //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
+    //학생 한명이 들은 중분류 리스트를 가져옴
+    orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(valueBystdNo_from_Map(i).sbjtCD)::orderedIdx_byStd
+    println("orderedIdx_byStd ===> " + orderedIdx_byStd)
+  }
+
+  for(i<-0 until )
+
+
+
+
+
+  orderedIdx_byStd = orderedIdx_byStd.sorted
+  println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
+
+  for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
+    var k=0;
+    //print(k)
+    // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
+    while(sbjtCD_in_departNM_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).sbjtCD){
+    k+=1;
+    }
+    // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
+    star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
+
+    // println(s"$star_point_List")
+  }
+
+  val star_list = star_point_List.map(x => x.toString.toDouble)
+  println(">>"+star_list)
+  sbjt_tuples = sbjt_tuples :+ (arr01(s).toString, star_list)
+
+}
+
+
+
+
+
+
+
 
 var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT")
 
@@ -460,13 +625,13 @@ var arr02 = arr01.toList.map(_.toString)
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
 // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
 
-
+var depart_activity_temp = List[Any]()
+var depart_activity_List = List[Any]()
 var activity_List_byStd = List[Any]()
 var act_tuples = Seq[(String, String)]()
 //광홍과 학번을 돌면서
 arr02.foreach{ stdNO =>
 
-  var depart_activity_temp = List[Any]()
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
 
   //List1 : 코드(중복제거x) -> map 함수로 df에서 list 변환
@@ -485,19 +650,32 @@ arr02.foreach{ stdNO =>
   //광홍과 201937039학생이 수행한 활동만 260개이고 나머지 광홍과 학생들의 데이터는 존재하지 않음
 
   //이제 코드 3개에 대해 groupby와 agg 연산을 사용하여 코드 별로 count
-  var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
+  // var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
+  val maps = scala.collection.mutable.Map[String, Int]()
 
-  println("Code====>" + outAct_code_List)
+  for(i<-0 until depart_code_list.size){
+  	maps(depart_code_list(i).toString) = 0
+  }
+
+  val s = outAct_code_temp3.collect
+
+  for(i<-0 until s.size){
+  	maps(s(i)(0).toString) = s(i)(1).toString.toInt
+  }
+  val maps_ = maps.toSeq.sortBy(_._1).toMap
+  val head = maps_.values.toList
+  print("head.size: " + head.size)
+
   //------------------------------------------------------------------------------
 
   //---------------------자율활동 name list(자격증01, 어학02)----------------------
   //5개의 코드
-  var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"), col("OAM_TITLE")).distinct
+  var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"), col("OAM_TITLE"), col("OAM_TYPE_CD")).distinct
   //3개의 코드만 필터링
   var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
 
   var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
-  println(outAct_name_List)
+  println("outAct_name====>" + outAct_name_List)
   // var t_size = outAct_name_List.length
   // if(t_size > 0) {
     // println(s"##### SIZE : ${t_size} RESULT => " + outAct_name_List)
@@ -511,8 +689,8 @@ arr02.foreach{ stdNO =>
   //------------------------------------------------------------------------------
 
   //학과 리스트
-  var depart_activity_List = depart_activity_temp.distinct
-  println(depart_activity_List)
+  depart_activity_List = depart_activity_temp.distinct
+  println("depart::::::::::::" + depart_activity_List)
 
   //namelist로 유무 비교
   //학생 name list 랑 학과 list를 비교해서 contain으로 1, 0
@@ -535,12 +713,15 @@ arr02.foreach{ stdNO =>
     activity_List_byStd_temp2
   }
   var activity_List_byStd_temp3 = activity_List_byStd_temp1.map(_._2)
-  println("activity_List_byStd:" + activity_List_byStd_temp3)
+
+  println("activity_List_byStd: " + activity_List_byStd_temp3)
+
   //학과 리스트를 돌면서 일치 여부 세는데
   //봉사03, 대외04, 기관05 = 횟수 count
   //자격증01, 어학02 = 유무(1 또는 0)
 
- activity_List_byStd = outAct_code_List ++ activity_List_byStd_temp3
+ // activity_List_byStd = outAct_code_List ++ activity_List_byStd_temp3
+ activity_List_byStd = head ++ activity_List_byStd_temp3
 
  //학생 별 코드 횟수, 이름 유무 리스트 출력
  println(stdNO)
