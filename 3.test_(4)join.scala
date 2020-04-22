@@ -394,7 +394,7 @@ var arr01 = Array(20142820, 20142932, 20152611)
       //-===========================================이건 학과 전체 중분류 목록 !!!!!!!!!!! 8개가 맞음 학생거를 다 중복제거하고 더함
       // List(NCR_T01_P01_C01, NCR_T01_P01_C03, NCR_T01_P02_C03, NCR_T01_P03_C01, NCR_T01_P03_C03, NCR_T01_P04_C03, NCR_T01_P05_C02, NCR_T01_P04_C07)
 
-      println("t1-------------------->" + t1)
+      // println("t1-------------------->" + t1)
     }
 
    val t1 = subcd_byDepart_Map_temp.map(x => x._2).flatMap(x => x).toList.distinct
@@ -541,7 +541,7 @@ arr02.foreach{ stdNO =>
   }
   val maps_ = maps.toSeq.sortBy(_._1).toMap
   val head = maps_.values.toList
-  print("head.size: " + head.size)
+  // print("head.size: " + head.size)
 
   //------------------------------------------------------------------------------
 
@@ -552,7 +552,7 @@ arr02.foreach{ stdNO =>
   var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
 
   var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
-  println("outAct_name====>" + outAct_name_List)
+  // println("outAct_name====>" + outAct_name_List)
   // var t_size = outAct_name_List.length
   // if(t_size > 0) {
     // println(s"##### SIZE : ${t_size} RESULT => " + outAct_name_List)
@@ -567,7 +567,7 @@ arr02.foreach{ stdNO =>
 
   //학과 리스트
   depart_activity_List = depart_activity_temp.distinct
-  println("depart::::::::::::" + depart_activity_List)
+  // println("depart::::::::::::" + depart_activity_List)
 
   //namelist로 유무 비교
   //학생 name list 랑 학과 list를 비교해서 contain으로 1, 0
@@ -590,7 +590,7 @@ arr02.foreach{ stdNO =>
   }
   var activity_List_byStd_temp3 = activity_List_byStd_temp1.map(_._2)
 
-  println("activity_List_byStd: " + activity_List_byStd_temp3)
+  // println("activity_List_byStd: " + activity_List_byStd_temp3)
 
   //학과 리스트를 돌면서 일치 여부 세는데
   //봉사03, 대외04, 기관05 = 횟수 count
@@ -600,8 +600,8 @@ arr02.foreach{ stdNO =>
  activity_List_byStd = head ++ activity_List_byStd_temp3
 
  //학생 별 코드 횟수, 이름 유무 리스트 출력
- println(stdNO)
- println("activity List !!! : " + activity_List_byStd)
+ // println(stdNO)
+ // println("activity List !!! : " + activity_List_byStd)
 
  val act_list = activity_List_byStd.map(x => x.toString.toInt)
 
@@ -626,14 +626,3 @@ join_df.show
 
 setMongoDF(spark, join_df)
 //mongodb에 저장할 때 중복 제거해서 넣기
-
-
-var userSimilarity_df = userSimilarity_table
-
-var row1 = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo("20153128"))
-
-var row1_temp = row1.collect.toList
-
-
-// val join_df_temp = sbjt_df.join(ncr_df, sbjt_df("STD_NO") === ncr_df("STD_NO"), "outer")
-// val df = join_df_temp.join(ncr_df, "STD_NO", "outer")
