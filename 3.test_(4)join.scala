@@ -501,8 +501,8 @@ var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).
 var stdNO_in_departNM = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
 // var arr01 = Array(201937039, 20153128, 20132019)
-// var arr01 = Array(20142820, 20142932, 20152611)
-var arr01 = Array(20142820)
+var arr01 = Array(20142820, 20142932, 20152611)
+// var arr01 = Array(20142820)
 var arr02 = arr01.toList.map(_.toString)
 
 //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
@@ -522,7 +522,7 @@ arr02.foreach{ stdNO =>
   //List3 : List1 + List2 = 코드리스트 + 이름리스트 (학생 한명이 수행한 자율활동내용)
   //---------------------자율활동 code list(자격증01, 어학02)----------------------
   //5개의 코드 (학생 한명이 수행한 봉사03, 대외04, 기관05을 코드 별로 groupby count list)
-  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20142820}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
+  var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
   //3개의 코드만 필터링
   var outAct_code_temp2 = outAct_code_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
   //학생 한명의 활동 코드만 존재하는 dataframe
@@ -615,7 +615,6 @@ arr02.foreach{ stdNO =>
  act_tuples = act_tuples :+ (stdNO, act_list)
 }
 
-
 var act_df = act_tuples.toDF("STD_NO", "ACTING_COUNT")
 
 // var act_df_test = act_df.filter(act_df("STD_NO").equalTo("201937039")).show
@@ -631,5 +630,5 @@ val join_df = join_df_temp.join(act_df, Seq("STD_NO"), "outer")
 
 join_df.show
 
-setMongoDF(spark, join_df)
+setMongoDF_USER_LIST(spark, join_df)
 //mongodb에 저장할 때 중복 제거해서 넣기

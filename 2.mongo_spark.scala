@@ -26,7 +26,8 @@ import org.apache.log4j.Level
 // val base ="mongodb://127.0.0.1/cpmongo."
 
 val base ="mongodb://127.0.0.1/cpmongo_distinct."
-val output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
+val USER_LIST_FOR_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY"
+val USER_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
 val SREG_output_base = "mongodb://127.0.0.1/cpmongo_distinct.SREG_SIM"
 val NCR_output_base = "mongodb://127.0.0.1/cpmongo_distinct.NCR_SIM"
 val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
@@ -50,7 +51,7 @@ val pfInfoUri = "V_STD_CDP_STAF"  //교수 정보 (professor info)
 val clInfoUri = "V_STD_CDP_SUBJECT"  //교과 정보 (class info)
 
 val cpsStarUri = "CPS_STAR_POINT"  //교과/비교과용 별점 테이블
-val userSimilarityUri = "USER_SIMILARITY" //유사도 분석 팀이 생성한 테이블
+val userforSimilarityUri = "USER_LIST_FOR_SIMILARITY" //유사도 분석 팀이 생성한 테이블
 
 Logger.getLogger("org").setLevel(Level.OFF)
 Logger.getLogger("akka").setLevel(Level.OFF)
@@ -69,11 +70,25 @@ def getMongoDF(
 }
 
 //새로 수정(연희 수정)
-def setMongoDF(
+def setMongoDF_USER_LIST(
 spark : SparkSession,
 df : DataFrame ) = {
-df.saveToMongoDB(WriteConfig(Map("uri"->(output_base))))
+df.saveToMongoDB(WriteConfig(Map("uri"->(USER_LIST_FOR_SIM_output_base))))
 }
+
+def setMongoDF_USER_SIM(
+spark : SparkSession,
+df : DataFrame ) = {
+df.saveToMongoDB(WriteConfig(Map("uri"->(USER_SIM_output_base))))
+}
+
+//
+// def dropMongoDF(
+// spark : SparkSession,
+// df : DataFrame ) = {
+// df.saveToMongoDB(WriteConfig(Map("uri"->(USER_SIM_output_base))))
+// }
+
 
 //setMongoDF(spark, dataframe명)
 
@@ -107,4 +122,4 @@ val pfInfoUri_table =  getMongoDF(spark, pfInfoUri)  //교수 정보 (professor 
 val clInfoUri_table =  getMongoDF(spark, clInfoUri)  //교과 정보 (class info)
 
 val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별점 테이블
-val userSimilarity_table = getMongoDF(spark, userSimilarityUri) //유사도 분석 팀이 생성한 테이블
+val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사도 분석 팀이 생성한 테이블
