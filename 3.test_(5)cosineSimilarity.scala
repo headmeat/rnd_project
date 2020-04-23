@@ -3,19 +3,13 @@
 
 var userSimilarity_df = userSimilarity_table.select(col("STD_NO"),  col("SUBJECT_STAR"), col("NCR_STAR"), col("ACTING_COUNT"))
 userSimilarity_df = userSimilarity_df.drop("_id")
+
 //질의자
-var student = 20142820
-var std1 = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo(s"${student}"})).drop("STD_NO")
-//유사사용자들
-// var std2 = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo("20142932")).drop("STD_NO")
-// var std3 = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo("20152611")).drop("STD_NO")
+var querySTD_NO = 20142820
+var querySTD = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo(s"${querySTD_NO}")).drop("STD_NO")
 
 val exStr = "WrappedArray|\\(|\\)|\\]|\\["
-
-
-var std1_List = std1.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
-// var std2_List = std2.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
-// var std3_List = std3.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
+var querySTD_List = querySTD.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
 
 object CosineSimilarity {
    def dotProduct(x: Array[Int], y: Array[Int]): Int = {
@@ -30,21 +24,18 @@ object CosineSimilarity {
   }
 }
 
-val sim = CosineSimilarity.cosineSimilarity(std1_List, std2_List)
-val sim2 = CosineSimilarity.cosineSimilarity(std1_List, std3_List)
-
-
-var sim_tuples = Seq[(String, List[Int])]()
+var sim_tuples = Seq[(String, Double)]()
 var stdNO_inDepart_List = userSimilarity_df.select(col("STD_NO")).rdd.map(x => x(0)).collect().toList
 
-
 stdNO_inDepart_List.foreach(stdNO => {
-  var std2 = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo(s"${stdNO}"})).drop("STD_NO")
-  var std2_List = std2.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
+  println(stdNO)
+  //유사사용자
+  var std_inDepart = userSimilarity_df.filter(userSimilarity_df("STD_NO").equalTo(s"${stdNO}")).drop("STD_NO")
+  var std_inDepart_List = std_inDepart.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
 
-  val sim = CosineSimilarity.cosineSimilarity(std1_List, std2_List)
+  val sim = CosineSimilarity.cosineSimilarity(querySTD_List, std_inDepart_List)
+  println(sim)
   sim_tuples = sim_tuples :+ (s"${stdNO}", sim)
-
 })
 var sim_df = sim_tuples.toDF("STD_NO", "similarity")
 
