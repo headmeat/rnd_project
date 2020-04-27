@@ -5,7 +5,7 @@ var userforSimilarity_df = userforSimilarity_table.select(col("STD_NO"), col("SU
 userforSimilarity_df = userforSimilarity_df.drop("_id")
 
 //질의자
-var querySTD_NO = 20152611
+var querySTD_NO = 20142820
 var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${querySTD_NO}")).drop("STD_NO")
 
 val exStr = "WrappedArray|\\(|\\)|\\]|\\["
@@ -83,9 +83,17 @@ var user_sim_acting_df = user_sim_tuples_act.toDF("STD_NO", "acting_similarity")
 
 var join_df_temp1 = user_sim_sbjt_df.join(user_sim_ncr_df, Seq("STD_NO"), "outer")
 var join_df_temp2 = join_df_temp1.join(user_sim_acting_df, Seq("STD_NO"), "outer")
-val join_df = join_df_temp2.join(user_sim_df, Seq("STD_NO"), "outer")
+val user_sim_join_df = join_df_temp2.join(user_sim_df, Seq("STD_NO"), "outer")
 
-// setMongoDF_USER_SIM(spark, user_sim_df)
+// setMongoDF_USER_SIM(spark, join_df)
+
+MongoSpark.save(
+user_sim_join_df.write
+    .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
+    .mode("overwrite"))
+
+
+
 //setMongoDF_USER_SIM(spark, user_sim_sbjt_df)
 //setMongoDF_USER_SIM(spark, user_sim_ncr_df)
 //setMongoDF_USER_SIM(spark, user_sim_acting_df)
