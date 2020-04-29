@@ -18,7 +18,7 @@ import org.apache.log4j.Level
 
 import scala.collection.mutable
 
-// val base ="mongodb://127.0.0.1/cpmongo."
+val base ="mongodb://127.0.0.1/cpmongo."
 
 val base ="mongodb://127.0.0.1/cpmongo_distinct."
 val output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
@@ -26,7 +26,7 @@ val SREG_output_base = "mongodb://127.0.0.1/cpmongo_distinct.SREG_SIM"
 val NCR_output_base = "mongodb://127.0.0.1/cpmongo_distinct.NCR_SIM"
 val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
 //교과: SREG_SIM, 비교과: NCR_SIM, 자율활동: ACTIVITY_SIM
-val Result_output_base = "mongodb://127.0.0.1/cpmongo_distinct.Recommend_Result"
+val Result_output_base = "mongodb://127.0.0.1/cpmongo_distinct.REC_RESULT"
 
 
 val replyUri = "CPS_BOARD_REPLY"  //댓글
@@ -152,7 +152,7 @@ for(i<-0 until corps.size){
     var add = df.select("기업가중치").as[String].collect()(0).toInt*w1*a+df.select("직원수 가중치").as[String].collect()(0).toInt*w2*b
     for(j<-0 until filter.size){
       //      tuples = tuples :+ (filter(j)(0).toString.toInt, add.toString.toDouble)
-      tuples = tuples :+ (filter(j)(0).toString.toInt, add.toString.asInstanceOf[Double])
+      tuples = tuples :+ (filter(j)(0).toString.toInt, add.toString.toDouble)
     }
   }else{
     for(j<-0 until filter.size){
@@ -160,7 +160,6 @@ for(i<-0 until corps.size){
     }
   }
 }
-//val df = tuples.toDF("GCI_STD_NO", "TRUST")
 
 //콘텐츠 신뢰도
 val test0 = getMongoDF(spark, "CPS_STAR_POINT")
@@ -168,60 +167,40 @@ var con = test0.select(col("STAR_KEY_ID"), col("STAR_POINT"))
 var con1 = con.groupBy("STAR_KEY_ID").agg(avg("STAR_POINT").alias("STAR_POINT"))
 
 //코드 다 실행하고 결과 출력해보는 거
-df.show()
+val user_sim_df = user_sim_tuples.toDF("STD_NO", "SIMILARITY")
+val user_trust_df = tuples.toDF("STD_NO", "TRUST")
+
+user_sim_df.show()
+user_trust_df.show()
 con1.show()
 
+//유사도+신뢰도 join
+
+val user_Result_df = user_trust_df.join(user_sim_df, Seq("STD_NO"), "outer")
+val user_Result_df_NaN = user_Result_df.na.fill(0.0, List("SIMILARITY")).na.fill(0.0, List("TRUST"))
+
+val newDf = user_Result_df_NaN.select(col("SIMILARITY").map(col("TRUST")).reduce((c1, c2) => c1 + c2) as "sum")
+
+//유사도+신뢰도 join DF->list변환
 
 val a = double2Double(1)
 val b = double2Double(1)
 val w1 = 0.5
 val w2 = 0.5
 
-val sim = scala.util.Random
+val res_ex_str = "\\[|\\]"
+val user_Result1 = user_Result_df_NaN.select("STD_NO", "SIMILARITY", "TRUST").collect.map(_.toString.replaceAll(res_ex_str, "")).map{ row =>
+  val x = row.split(",")
+  val stdNo = x(0)
+  val sim = x(1).toDouble * a * w1
+  val tru = x(2).toDouble * b * w2
+  (stdNo, sim, tru, sim + tru)
+}.sortBy(x=> x._4).reverse
 
-case class myClass(STD_NO: Int, SIM: Double, TRUST: Double, Result: Double)
-import spark.implicits._
-val list0 = tuples.map { x =>
-  val STD_NO = x._1
-  val tSim = sim.nextDouble()
-  val tTrust = x._2
-  val tResult = 0
-  val res = myClass(STD_NO, tSim, tTrust, tResult)
-  res
-}
-val myDF = list0.toDF()
-myDF.show()
+def roundAt(p: Int)(n: Double): Double = { val s = math pow (10, p); (math round n * s) / s }
 
-//가중치(w), 상수(a,b), 최종추천 학생 계산부분
-case class myClass2(STD_NO: Int, SIM_Result: Double, TRUST_Result: Double, Result: Double)
-val list1 = list0.map { row =>
-  val c1 = row.SIM * a * w1
-  val c2 = row.TRUST * b * w2
-  val c3 = c1 + c2
-  val res = myClass2(row.STD_NO, c1, c2, c3)
-  res
-}
-
-val myDF2 = list1.toDF().orderBy(desc("Result"))
-myDF2.show()
-
-val myDF3 = list1.toDF().orderBy(desc("Result")).limit(10)
-myDF3.show()
-
-//DF -> List로 변경
-import org.apache.spark.sql.functions.collect_list
-var reducedDF = myDF3.select("STD_NO", "Result").distinct()
-
-reducedDF
-  .groupBy("STD_NO")
-  .agg(collect_list($"Result").as("Result"))
-  .rdd
-  .map(row => (row(0).toString -> row(1).asInstanceOf[scala.collection.mutable.WrappedArray[String]].toList))
-  .collectAsMap()
-
-reducedDF.groupBy("STD_NO").agg(collect_list($"Result").as("Result")).rdd.map(row => (row(0).toString -> row(1).asInstanceOf[scala.collection.mutable.WrappedArray[String]].toList)).collectAsMap()
-
-
+//유사도 + 신뢰도결합 최종 추천학생 list
+val std_arr = user_Result1.map(x=>x._1).toSeq.toList.take(10)
 
 // 교과목수료 테이블 중 학번, 학과, 교과목번호, 과목명
 
@@ -236,7 +215,7 @@ var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std
 var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct.map(_.toString)
 ///////////////////////////////////////
 
-val std_arr = Seq(20190030, 20170063, 20142915, 20152634, 20142824, 20161627)
+//val std_arr = Seq(20190030, 20170063, 20142915, 20152634, 20142824, 20161627)
 
 val std_list = std_arr.map{ stdno =>
   val res = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${stdno}"))
@@ -291,11 +270,7 @@ var ncrStdInfoUri_stdNO = ncrInfoUri_DF.filter(ncrInfoUri_DF("NPS_STD_NO").equal
 var ncrStdInfoUri_stdNO_List = ncrStdInfoUri_stdNO.rdd.map(r=>r(0)).collect.toList.distinct.map(_.toString)
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-// 데이터 학번 20142820, 20142932, 20152611, 20152615
-//  val dfs_2 = Seq(std_STAR_KEY_list1, std_STAR_KEY_list2, std_STAR_KEY_list3, std_STAR_KEY_list4)
-val std_arr2 = Seq(201937001, 20142932, 20152611, 20152615, 201926041)
-
-val ncrStdInfoUri_arr = std_arr2.map{ stdno =>
+val ncrStdInfoUri_arr = std_arr.map{ stdno =>
   val res = ncrInfoUri_DF.filter(ncrInfoUri_DF("NPS_STD_NO").equalTo(s"${stdno}")).filter($"NPS_STATE" === "NCR_T07_P05")
   res
 }.map{ x =>
@@ -332,13 +307,11 @@ val clPassUri_table =  getMongoDF(spark, clPassUri) //교과목 수료(class pas
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
 outActUri_DF.show()
 
-val OAM_STD_NO = Seq(201937027,201926086,201937040)
-
 
 //---------------------자율활동 추천 code list(자격증 CD01, 어학 CD02)----------------------
 
 
-val outActUri_CD01_arr = OAM_STD_NO.map{ stdno =>
+val outActUri_CD01_arr = std_arr.map{ stdno =>
   val res = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdno}"))
   res
 }.map{ x =>
@@ -347,7 +320,7 @@ val outActUri_CD01_arr = OAM_STD_NO.map{ stdno =>
 }.flatMap( x=> x).groupBy(x => x).mapValues(_.length).toList.sortBy(x => x._2).reverse
 
 
-val outActUri_CD02_arr = OAM_STD_NO.map{ stdno =>
+val outActUri_CD02_arr = std_arr.map{ stdno =>
   val res = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdno}"))
   res
 }.map{ x =>
@@ -358,7 +331,7 @@ val outActUri_CD02_arr = OAM_STD_NO.map{ stdno =>
 
 //---------------------자율활동 추천 code list(봉사 CD03, 대외활동 CD04, 기관현장실습 CD05)----------------------
 
-val outActUri_CD03 = OAM_STD_NO.map{ stdno =>
+val outActUri_CD03 = std_arr.map{ stdno =>
   val res = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdno}"))
   res
 }.map{ x =>
@@ -370,7 +343,7 @@ val result = outActUri_CD03.map(x => x._2)
 
 case class OAM_TYPE_CD(OAM_TYPE_CD: Int, count : Int)
 val outActUri_CD03_arr = result.map{ row =>
-  val avg = row / OAM_STD_NO.length
+  val avg = row / std_arr.length
   val res3 = ("OAM_TYPE_CD", avg)
   res3
 }
@@ -382,11 +355,11 @@ val maxSize = 5
 val rankList = Seq(PassUri_top5, NCR_std_Info_top5, CD01_top5, CD02_top5, CD03_avg)
 var colSet = scala.collection.mutable.Set[String]()
 
-val PassUri_top5 = res_arr.sortBy(x => x._2).reverse.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1, x._1._2)).toDF("Rank","SBJT_KEY_CD","Pass_Result")
-val NCR_std_Info_top5 = res_arr2.sortBy(x => x._2).reverse.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1, x._1._2)).toDF("Rank","NPI_KEY_ID","NCR_Result")
-val CD01_top5 = outActUri_CD01_arr.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1, x._1._2)).toDF("Rank","OAMTYPCD01","OAM01_Result")
-val CD02_top5 = outActUri_CD02_arr.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1, x._1._2)).toDF("Rank","OAMTYPCD02","OAM02_Result")
-val CD03_avg = outActUri_CD03_arr.zipWithIndex.map(x => (x._2 + 1, s"OAMTYPCD0${x._2 + 3}", x._1._2)).toDF("Rank","OAM_TYPE_CD", "avg")
+val PassUri_top5 = res_arr.sortBy(x => x._2).reverse.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","SBJT_KEY_CD")
+val NCR_std_Info_top5 = res_arr2.sortBy(x => x._2).reverse.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","NPI_KEY_ID")
+val CD01_top5 = outActUri_CD01_arr.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","OAMTYPCD01")
+val CD02_top5 = outActUri_CD02_arr.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","OAMTYPCD02")
+val CD03_avg = outActUri_CD03_arr.zipWithIndex.map(x => (x._2 + 1, s"OAMTYPCD0${x._2 + 3}", x._1._2)).toDF("Rank","OAM_TYPE_CD", "AVG")
 
 //최종적으로 join해서 합치기
 val rankList = Seq(NCR_std_Info_top5, CD01_top5, CD02_top5, CD03_avg)
@@ -398,5 +371,3 @@ rankList.foreach{ DF =>
 Result_All.sort("Rank").show
 
 setMongoDF_result(spark, Result_All)
-
-
