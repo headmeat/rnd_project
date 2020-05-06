@@ -225,8 +225,6 @@ import org.apache.spark.sql.types.{
     StructType, StructField, StringType, IntegerType}
 import org.apache.spark.sql.Row
 
-
-
 val schema3 = StructType(
     StructField("STAR_POINT", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
@@ -239,12 +237,18 @@ var subcd_byStd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema4)
 //----------------------------------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
+// 2-1. 학과
+var std_NO = 20152611
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
+
 var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
 
-var departNM = "컴퓨터공학과"
+// var departNM = "컴퓨터공학과"
 var stdNO_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
 
 case class starPoint(subcd:String, starpoint:Any)
@@ -260,8 +264,6 @@ val tmp_set = scala.collection.mutable.Set[String]()
 
 var myResStr = ""
 
-
-
 val schema1 = StructType(
     StructField("STAR_POINT", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
@@ -269,8 +271,6 @@ val schema1 = StructType(
 val schema2 = StructType(
     StructField("NPI_AREA_SUB_CD", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
-
-
 
 var arr01 = Array(20142820, 20142932, 20152611)
 
@@ -415,7 +415,7 @@ var arr01 = Array(20142820, 20142932, 20152611)
   // 20152611 -> Array(starPoint(NCR_T01_P01_C03,null), starPoint(NCR_T01_P05_C02,null), starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P04_C07,null), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)),
   // 20142820 -> Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)))
 
-  println(subcd_byDepart_List)
+  // println(subcd_byDepart_List)
 
   // 학과의 모든 학번의 (중분류, 별점) Map
   subcd_star_byDepart_Map
@@ -447,11 +447,11 @@ for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 f
     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
     //학생 한명이 들은 중분류 리스트를 가져옴
     orderedIdx_byStd = subcd_byDepart_List.indexOf(valueBystdNo_from_Map(i).subcd)::orderedIdx_byStd
-    println("orderedIdx_byStd ===> " + orderedIdx_byStd)
+    // println("orderedIdx_byStd ===> " + orderedIdx_byStd)
   }
   // orderedIdx_byStd를 정렬(중분류 코드 정렬)
   orderedIdx_byStd = orderedIdx_byStd.sorted
-  println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
+  // println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
 
   for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
     var k=0;
@@ -462,11 +462,10 @@ for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 f
     }
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
     star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
-
     // println(s"$star_point_List")
   }
   val star_list = star_point_List.map(x => x.toString.toDouble)
-  println(">>"+star_list)
+  // println(">>"+star_list)
   ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_list)
 }
 
@@ -488,10 +487,15 @@ val schema6 = StructType(
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
 var star_subcd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema3)
 
+// 2-1. 학과
+var std_NO = 20152611
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
 
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
 // var departNM = "광고홍보학과"
-var departNM = "컴퓨터공학과"
+// var departNM = "컴퓨터공학과"
 // var std_NO1 = 201937039
 var std_NO1 = 20142820
 var std_NO2 = 20130001
@@ -630,5 +634,10 @@ val join_df = join_df_temp.join(act_df, Seq("STD_NO"), "outer")
 
 join_df.show
 
-setMongoDF_USER_LIST(spark, join_df)
+// setMongoDF_USER_LIST(spark, join_df)
 //mongodb에 저장할 때 중복 제거해서 넣기
+
+MongoSpark.save(
+  join_df.write
+    .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY")
+    .mode("overwrite"))

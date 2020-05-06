@@ -1,4 +1,137 @@
-import 3.test_lhb.scala
+/*RnD 개발*/
+
+//spark 접속
+spark-shell --packages org.mongodb.spark:mongo-spark-connector_2.11:2.2.1
+
+
+//MongoDB에서 불러오기
+
+import com.mongodb.spark._
+import com.mongodb.spark.config._
+import org.apache.spark._
+import org.apache.spark.rdd.RDD
+import com.mongodb.spark.rdd.MongoRDD
+import com.mongodb.spark.sql._
+import org.bson.Document
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.DataFrame
+import java.sql.Timestamp
+import java.time.Duration
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.Column
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
+
+// val base ="mongodb://127.0.0.1/cpmongo."
+
+val base ="mongodb://127.0.0.1/cpmongo_distinct."
+val USER_LIST_FOR_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY"
+val USER_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
+val SREG_output_base = "mongodb://127.0.0.1/cpmongo_distinct.SREG_SIM"
+val NCR_output_base = "mongodb://127.0.0.1/cpmongo_distinct.NCR_SIM"
+val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
+//교과: SREG_SIM, 비교과: NCR_SIM, 자율활동: ACTIVITY_SIM
+
+
+val replyUri = "CPS_BOARD_REPLY"  //댓글
+val codeUri = "CPS_CODE_MNG"  //통합 코드관리 테이블
+val gradCorpUri = "CPS_GRADUATE_CORP_INFO"  //졸업 기업
+val ncrInfoUri = "CPS_NCR_PROGRAM_INFO"  //비교과 정보
+val ncrStdInfoUri = "CPS_NCR_PROGRAM_STD"  //비교과 신청학생
+val outActUri = "CPS_OUT_ACTIVITY_MNG"  //교외활동
+val jobInfoUri = "CPS_SCHOOL_EMPLOY_INFO"  //채용정보-관리자 등록
+val sjobInfoUri = "CPS_SCHOOL_EMPLOY_STD_INFO"  //채용정보 신청 학생 정보(student job info)
+
+
+val deptInfoUri = "V_STD_CDP_DEPTQ"  //학과 정보 (department info)
+val clPassUri = "V_STD_CDP_PASSCURI" //교과목 수료(class pass)
+val stInfoUri = "V_STD_CDP_SREG"  //학생 정보 (student info)
+val pfInfoUri = "V_STD_CDP_STAF"  //교수 정보 (professor info)
+val clInfoUri = "V_STD_CDP_SUBJECT"  //교과 정보 (class info)
+
+val cpsStarUri = "CPS_STAR_POINT"  //교과/비교과용 별점 테이블
+val userforSimilarityUri = "USER_LIST_FOR_SIMILARITY" //유사도 분석 팀이 생성한 테이블
+
+Logger.getLogger("org").setLevel(Level.OFF)
+Logger.getLogger("akka").setLevel(Level.OFF)
+Logger.getLogger("MongoRelation").setLevel(Level.OFF)
+Logger.getLogger("MongoClientCache").setLevel(Level.OFF)
+
+
+Logger.getRootLogger().setLevel(Level.ERROR)
+// Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+// Logger.getLogger("org.spark-project").setLevel(Level.WARN)
+
+def getMongoDF(
+ spark : SparkSession,
+ coll : String ) : DataFrame = {
+   spark.read.mongo(ReadConfig(Map("uri"->(base+coll))))
+}
+
+//새로 수정(연희 수정)
+def setMongoDF_USER_LIST(
+spark : SparkSession,
+df : DataFrame ) = {
+df.saveToMongoDB(WriteConfig(Map("uri"->(USER_LIST_FOR_SIM_output_base))))
+}
+
+def setMongoDF_USER_SIM(
+spark : SparkSession,
+df : DataFrame ) = {
+df.saveToMongoDB(WriteConfig(Map("uri"->(USER_SIM_output_base))))
+}
+
+// MongoSpark.save(
+// join_df.write
+//     .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
+//     .mode("overwrite"))
+
+//
+// def updatemongoDF_USER_SIM(
+//   spark:SparkSession,
+//   df:DataFrame) = {
+//     df.
+//   }
+
+//
+// def dropMongoDF(
+// spark : SparkSession,
+// df : DataFrame ) = {
+// df.saveToMongoDB(WriteConfig(Map("uri"->(USER_SIM_output_base))))
+// }
+
+//setMongoDF(spark, dataframe명)
+
+//예전꺼
+// def setMongoDF(
+// spark : SparkSession,
+// coll: String,
+// df : DataFrame ) = {
+// df.saveToMongoDB(WriteConfig(Map("uri"->(base+coll))))
+// }
+
+
+val replyUri_table = getMongoDF(spark, replyUri)  //댓글
+val codeUri_table =  getMongoDF(spark, codeUri)  //통합 코드관리 테이블
+val gradCorpUri_table =  getMongoDF(spark, gradCorpUri)  //졸업 기업
+val ncrInfoUri_table =  getMongoDF(spark, ncrInfoUri)  //비교과 정보
+val ncrStdInfoUri_table =  getMongoDF(spark, ncrStdInfoUri)  //비교과 신청학생
+val outActUri_table =  getMongoDF(spark, outActUri)  //교외활동
+val jobInfoUri_table =  getMongoDF(spark, jobInfoUri)  //채용정보-관리자 등록
+val sjobInfoUri_table =  getMongoDF(spark, sjobInfoUri)  //채용정보 신청 학생 정보(student job info)
+
+
+val deptInfoUri_table =  getMongoDF(spark, deptInfoUri)  //학과 정보 (department info)
+val clPassUri_table =  getMongoDF(spark, clPassUri) //교과목 수료(class pass)
+val stInfoUri_table =  getMongoDF(spark, stInfoUri)  //학생 정보 (student info)
+val pfInfoUri_table =  getMongoDF(spark, pfInfoUri)  //교수 정보 (professor info)
+val clInfoUri_table =  getMongoDF(spark, clInfoUri)  //교과 정보 (class info)
+
+val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별점 테이블
+val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사도 분석 팀이 생성한 테이블
+
+
 //-------------------- # # # 교과목 리스트 # # # --------------------------------
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
@@ -225,8 +358,6 @@ import org.apache.spark.sql.types.{
     StructType, StructField, StringType, IntegerType}
 import org.apache.spark.sql.Row
 
-
-
 val schema3 = StructType(
     StructField("STAR_POINT", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
@@ -239,12 +370,18 @@ var subcd_byStd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema4)
 //----------------------------------------------------------------------------------------------------------------------------
 
 //-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
+// 2-1. 학과
+var std_NO = 20152611
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
+
 var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
 
-var departNM = "컴퓨터공학과"
+// var departNM = "컴퓨터공학과"
 var stdNO_in_departNM = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
 
 case class starPoint(subcd:String, starpoint:Any)
@@ -260,8 +397,6 @@ val tmp_set = scala.collection.mutable.Set[String]()
 
 var myResStr = ""
 
-
-
 val schema1 = StructType(
     StructField("STAR_POINT", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
@@ -269,8 +404,6 @@ val schema1 = StructType(
 val schema2 = StructType(
     StructField("NPI_AREA_SUB_CD", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
-
-
 
 var arr01 = Array(20142820, 20142932, 20152611)
 
@@ -415,7 +548,7 @@ var arr01 = Array(20142820, 20142932, 20152611)
   // 20152611 -> Array(starPoint(NCR_T01_P01_C03,null), starPoint(NCR_T01_P05_C02,null), starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P04_C07,null), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)),
   // 20142820 -> Array(starPoint(NCR_T01_P04_C03,3.8), starPoint(NCR_T01_P01_C01,4.5), starPoint(NCR_T01_P02_C03,3.85), starPoint(NCR_T01_P03_C03,4.0), starPoint(NCR_T01_P03_C01,4.2)))
 
-  println(subcd_byDepart_List)
+  // println(subcd_byDepart_List)
 
   // 학과의 모든 학번의 (중분류, 별점) Map
   subcd_star_byDepart_Map
@@ -447,11 +580,11 @@ for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 f
     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
     //학생 한명이 들은 중분류 리스트를 가져옴
     orderedIdx_byStd = subcd_byDepart_List.indexOf(valueBystdNo_from_Map(i).subcd)::orderedIdx_byStd
-    println("orderedIdx_byStd ===> " + orderedIdx_byStd)
+    // println("orderedIdx_byStd ===> " + orderedIdx_byStd)
   }
   // orderedIdx_byStd를 정렬(중분류 코드 정렬)
   orderedIdx_byStd = orderedIdx_byStd.sorted
-  println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
+  // println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
 
   for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
     var k=0;
@@ -462,11 +595,10 @@ for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 f
     }
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
     star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
-
     // println(s"$star_point_List")
   }
   val star_list = star_point_List.map(x => x.toString.toDouble)
-  println(">>"+star_list)
+  // println(">>"+star_list)
   ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_list)
 }
 
@@ -488,10 +620,15 @@ val schema6 = StructType(
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
 var star_subcd_DF = spark.createDataFrame(sc.emptyRDD[Row], schema3)
 
+// 2-1. 학과
+var std_NO = 20152611
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
 
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
 // var departNM = "광고홍보학과"
-var departNM = "컴퓨터공학과"
+// var departNM = "컴퓨터공학과"
 // var std_NO1 = 201937039
 var std_NO1 = 20142820
 var std_NO2 = 20130001
@@ -630,5 +767,141 @@ val join_df = join_df_temp.join(act_df, Seq("STD_NO"), "outer")
 
 join_df.show
 
-setMongoDF_USER_LIST(spark, join_df)
+// setMongoDF_USER_LIST(spark, join_df)
 //mongodb에 저장할 때 중복 제거해서 넣기
+
+MongoSpark.save(
+  join_df.write
+    .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY")
+    .mode("overwrite"))
+
+
+    // mongodb collection 제거
+    // db.USER_SIMILARITY.drop()
+
+    var userforSimilarity_df = userforSimilarity_table.select(col("STD_NO"), col("SUBJECT_STAR"), col("NCR_STAR"), col("ACTING_COUNT"))
+    userforSimilarity_df = userforSimilarity_df.drop("_id")
+
+    //질의자
+    var querySTD_NO = 20142820
+    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${querySTD_NO}")).drop("STD_NO")
+
+    val exStr = "WrappedArray|\\(|\\)|\\]|\\["
+
+
+    var querySTD_List = querySTD.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
+    var sbjt_star = querySTD.select(col("SUBJECT_STAR")).collect.toList.mkString.replaceAll(exStr, "").split(",").map(x=>(x.trim.toDouble * 10).toInt)
+    var ncr_star = querySTD.select(col("NCR_STAR")).collect.toList.mkString.replaceAll(exStr, "").split(",").map(x=>(x.trim.toDouble * 10).toInt)
+    var acting_count = querySTD.select(col("ACTING_COUNT")).collect.toList.mkString.replaceAll(exStr, "").split(",").map(x=>(x.trim.toDouble * 10).toInt)
+
+    var w1, w2, w3 = 0.33 //가중치 값
+    var a, b, r = 1 //알파, 베타, 감마
+
+    object CosineSimilarity {
+       def dotProduct(x: Array[Int], y: Array[Int]): Int = {
+         (for((a, b) <- x zip y) yield a * b) sum
+       }
+       def magnitude(x: Array[Int]): Double = {
+         math.sqrt(x map(i => i*i) sum)
+       }
+      def cosineSimilarity(x: Array[Int], y: Array[Int]): Double = {
+        require(x.size == y.size)
+        dotProduct(x, y)/(magnitude(x) * magnitude(y))
+      }
+    }
+
+    var user_sim_tuples = Seq[(String, Double)]()
+    var user_sim_tuples_sbjt = Seq[(String, Double)]()
+    var user_sim_tuples_ncr = Seq[(String, Double)]()
+    var user_sim_tuples_act = Seq[(String, Double)]()
+    var stdNO_inDepart_List = userforSimilarity_df.select(col("STD_NO")).rdd.map(x => x(0)).collect().toList
+
+    stdNO_inDepart_List.foreach(stdNO => {
+      // var i = 0; //토탈 구해줄 떄 바꿀라고
+
+      println(stdNO)
+      //유사사용자
+      var std_inDepart = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${stdNO}")).drop("STD_NO")
+      var std_inDepart_List = std_inDepart.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
+
+      //교과
+      var sbjt_star_ = std_inDepart.select(col("SUBJECT_STAR")).collect.toList.mkString.replaceAll(exStr, "").split(",").map(x=>(x.trim.toDouble * 10).toInt)
+      //비교과
+      var ncr_star_ = std_inDepart.select(col("NCR_STAR")).collect.toList.mkString.replaceAll(exStr, "").split(",").map(x=>(x.trim.toDouble * 10).toInt)
+      //자율활동
+      var acting_count_ = std_inDepart.select(col("ACTING_COUNT")).collect.toList.mkString.replaceAll(exStr, "").split(",").map(x=>(x.trim.toDouble * 10).toInt)
+
+      //val sim = CosineSimilarity.cosineSimilarity(querySTD_List, std_inDepart_List)
+      val sbjt_sim = CosineSimilarity.cosineSimilarity(sbjt_star, sbjt_star_)
+      val ncr_sim = CosineSimilarity.cosineSimilarity(ncr_star, ncr_star_)
+      val acting_sim = CosineSimilarity.cosineSimilarity(acting_count, acting_count_)
+
+      //println(sim)
+      //user_sim_tuples = user_sim_tuples :+ (s"${stdNO}", sim)
+      user_sim_tuples_sbjt = user_sim_tuples_sbjt :+ (s"${stdNO}", sbjt_sim)
+      user_sim_tuples_ncr = user_sim_tuples_ncr :+ (s"${stdNO}", ncr_sim)
+      user_sim_tuples_act = user_sim_tuples_act :+ (s"${stdNO}", acting_sim)
+
+      // var total_sim = (user_sim_tuples_sbjt(i)._2 * w1) + (user_sim_tuples_ncr(i)._2 * w2) + (user_sim_tuples_act(i)._2 * w3)
+      var total_sim = (sbjt_sim * w1) + (ncr_sim * w2) + (acting_sim * w3)
+      println(total_sim)
+      //
+      // i += 1;
+
+      //전체 유사도 구하기
+      user_sim_tuples = user_sim_tuples :+ (s"${stdNO}", total_sim)
+
+    })
+
+    var user_sim_df = user_sim_tuples.toDF("STD_NO", "similarity")
+    var user_sim_sbjt_df = user_sim_tuples_sbjt.toDF("STD_NO", "sbjt_similarity")
+    var user_sim_ncr_df = user_sim_tuples_ncr.toDF("STD_NO", "ncr_similarity")
+    var user_sim_acting_df = user_sim_tuples_act.toDF("STD_NO", "acting_similarity")
+
+
+    var join_df_temp1 = user_sim_sbjt_df.join(user_sim_ncr_df, Seq("STD_NO"), "outer")
+    var join_df_temp2 = join_df_temp1.join(user_sim_acting_df, Seq("STD_NO"), "outer")
+    val user_sim_join_df = join_df_temp2.join(user_sim_df, Seq("STD_NO"), "outer")
+
+    // setMongoDF_USER_SIM(spark, join_df)
+
+    MongoSpark.save(
+    user_sim_join_df.write
+        .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
+        .mode("overwrite"))
+
+
+
+    //setMongoDF_USER_SIM(spark, user_sim_sbjt_df)
+    //setMongoDF_USER_SIM(spark, user_sim_ncr_df)
+    //setMongoDF_USER_SIM(spark, user_sim_acting_df)
+    //
+    // def updateField(_id : String, inputDocument : String): Future[UpdateResult] = {
+    //
+    //    /* inputDocument = {"key" : value}*/
+    //
+    //    val mongoClient = MongoClient("mongodb://localhost:27017")
+    //    val database: MongoDatabase = mongoClient.getDatabase("cpmongo_distinct")
+    //    val collection: MongoCollection[Document] = database.getCollection("USER_SIMILARITY")
+    //
+    //    val updateDocument = Document("$set" -> Document(inputDocument))
+    //
+    //    collection
+    //      .updateOne(Filters.eq("_id", BsonObjectId(_id)), updateDocument)
+    //      .toFuture()
+    //  }
+
+    // querySTD_List
+    // Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //    0, 0, 0, 41, 0, 0, 0, 0, 0, 0, 44, 34, 33, 36, 45, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //     0, 0, 0, 0, 0, 0, 0, 0, 0, 45, 0, 38, 42, 40, 38, 0, 0, 0, 10, 0, 10, 10)
+    //
+    // std_inDepart_List
+    // Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //   0, 0, 0, 0, 0, 0, 35, 30, -10, 27, 42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //   0, 0, 0, 0, 0, 0, 0, 0, 0, 31, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 36, 0, 0, 0, 40, 27, 34, 20, 0,
+    //   20, 0, 0)
