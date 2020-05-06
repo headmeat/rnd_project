@@ -179,7 +179,7 @@ con1.show()
 val user_Result_df = user_trust_df.join(user_sim_df, Seq("STD_NO"), "outer")
 val user_Result_df_NaN = user_Result_df.na.fill(0.0, List("SIMILARITY")).na.fill(0.0, List("TRUST"))
 
-val newDf = user_Result_df_NaN.select(col("SIMILARITY").map(col("TRUST")).reduce((c1, c2) => c1 + c2) as "sum")
+//val newDf = user_Result_df_NaN.select(col("SIMILARITY").map(col("TRUST")).reduce((c1, c2) => c1 + c2) as "sum")
 
 //유사도+신뢰도 join DF->list변환
 
@@ -209,7 +209,7 @@ val clPassUri_table =  getMongoDF(spark, clPassUri) //교과목 수료(class pas
 //유사도팀이랑 합치면 없애야되는부분 => 중복제거하면 값 1개만불러와짐
 var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
 
-//한학생이 들은 수업리스트
+//한학생이 들은 수업리스트(질의자)
 var std_NO = 20152611
 var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KEY_CD")).distinct
 var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct.map(_.toString)
@@ -307,6 +307,11 @@ val clPassUri_table =  getMongoDF(spark, clPassUri) //교과목 수료(class pas
 var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
 outActUri_DF.show()
 
+//유사도팀
+var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${std_NO}")).select(col("OAM_STD_NO"), col("OAM_TITLE"), col("OAM_TYPE_CD")).distinct
+//3개의 코드만 필터링
+var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
+var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
 
 //---------------------자율활동 추천 code list(자격증 CD01, 어학 CD02)----------------------
 
@@ -335,34 +340,68 @@ val outActUri_CD03 = std_arr.map{ stdno =>
   val res = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdno}"))
   res
 }.map{ x =>
-  val res = x.select("OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05").collect.toList
+  val res = x.select("OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD03").collect.toList
   res
 }.flatMap( x=> x).groupBy(x => x).mapValues(_.length).toList.sortBy(x => x._2).reverse
 
-val result = outActUri_CD03.map(x => x._2)
+val outActUri_CD03_result = outActUri_CD03.map(x => x._2)
 
 case class OAM_TYPE_CD(OAM_TYPE_CD: Int, count : Int)
-val outActUri_CD03_arr = result.map{ row =>
+val outActUri_CD03_arr = outActUri_CD03_result.map{ row =>
   val avg = row / std_arr.length
-  val res3 = ("OAM_TYPE_CD", avg)
+  val res3 = ("OAM_TYPE_CD03", avg)
+  res3
+}
+
+val outActUri_CD04 = std_arr.map{ stdno =>
+  val res = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdno}"))
+  res
+}.map{ x =>
+  val res = x.select("OAM_TYPE_CD").filter($"OAM_TYPE_CD" ==="OAMTYPCD04").collect.toList
+  res
+}.flatMap( x=> x).groupBy(x => x).mapValues(_.length).toList.sortBy(x => x._2).reverse
+
+val outActUri_CD04_result = outActUri_CD04.map(x => x._2)
+
+case class OAM_TYPE_CD(OAM_TYPE_CD: Int, count : Int)
+val outActUri_CD04_arr = outActUri_CD04_result.map{ row =>
+  val avg = row / std_arr.length
+  val res3 = ("OAM_TYPE_CD04", avg)
+  res3
+}
+
+val outActUri_CD05 = std_arr.map{ stdno =>
+  val res = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdno}"))
+  res
+}.map{ x =>
+  val res = x.select("OAM_TYPE_CD").filter($"OAM_TYPE_CD" ==="OAMTYPCD05").collect.toList
+  res
+}.flatMap( x=> x).groupBy(x => x).mapValues(_.length).toList.sortBy(x => x._2).reverse
+
+val outActUri_CD05_result = outActUri_CD05.map(x => x._2)
+
+case class OAM_TYPE_CD(OAM_TYPE_CD: Int, count : Int)
+val outActUri_CD05_arr = outActUri_CD05_result.map{ row =>
+  val avg = row / std_arr.length
+  val res3 = ("OAM_TYPE_CD05", avg)
   res3
 }
 
 ////---------------------------------교과(sbjt_df), 비교과(ncr_df), 자율활동(act_df) join (Key값 필요) -------------------------------
 
 val maxSize = 5
-
-val rankList = Seq(PassUri_top5, NCR_std_Info_top5, CD01_top5, CD02_top5, CD03_avg)
 var colSet = scala.collection.mutable.Set[String]()
 
 val PassUri_top5 = res_arr.sortBy(x => x._2).reverse.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","SBJT_KEY_CD")
 val NCR_std_Info_top5 = res_arr2.sortBy(x => x._2).reverse.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","NPI_KEY_ID")
 val CD01_top5 = outActUri_CD01_arr.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","OAMTYPCD01")
 val CD02_top5 = outActUri_CD02_arr.take(maxSize).zipWithIndex.map(x => (x._2 + 1, x._1._1)).toDF("Rank","OAMTYPCD02")
-val CD03_avg = outActUri_CD03_arr.zipWithIndex.map(x => (x._2 + 1, s"OAMTYPCD0${x._2 + 3}", x._1._2)).toDF("Rank","OAM_TYPE_CD", "AVG")
+val CD03_avg = outActUri_CD03_arr.zipWithIndex.map(x => (x._2 + 1, x._1._2)).toDF("Rank", "OAMTYPCD03_AVG")
+val CD04_avg = outActUri_CD04_arr.zipWithIndex.map(x => (x._2 + 1, x._1._2)).toDF("Rank", "OAMTYPCD04_AVG")
+val CD05_avg = outActUri_CD05_arr.zipWithIndex.map(x => (x._2 + 1, x._1._2)).toDF("Rank", "OAMTYPCD05_AVG")
 
 //최종적으로 join해서 합치기
-val rankList = Seq(NCR_std_Info_top5, CD01_top5, CD02_top5, CD03_avg)
+val rankList = Seq(NCR_std_Info_top5, CD01_top5, CD02_top5, CD03_avg, CD04_avg, CD05_avg)
 
 var Result_All = PassUri_top5
 rankList.foreach{ DF =>
