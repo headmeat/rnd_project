@@ -11,11 +11,11 @@ def calSim (spark:SparkSession, stdNo: Int) : DataFrame = {
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 
-var std_NO = 20152611
+// var std_NO = 20152611
 
 // 2-1. 학과
 var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
-var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${stdNo}")).select(col("SUST_CD_NM")).distinct
 var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
 
 // 2-2. 학과 학생 리스트
@@ -24,7 +24,7 @@ var stdNO_in_departNM_List = stdNO_in_departNM_sbjt.rdd.map(r=>r(0)).collect.toL
 
 // 3-1. 학생의 수업 리스트
 //^^
-// var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KEY_CD"))
+// var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${stdNo}")).select(col("SBJT_KEY_CD"))
 // var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
 // 3-2. 학과의 수업 리스트
@@ -449,8 +449,8 @@ MongoSpark.save(
     userforSimilarity_df = userforSimilarity_df.drop("_id")
 
     //질의자
-    var querySTD_NO = 20142820
-    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${querySTD_NO}")).drop("STD_NO")
+    // var querySTD_NO = 20142820
+    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${stdNo}")).drop("STD_NO")
 
     val exStr = "WrappedArray|\\(|\\)|\\]|\\["
 
