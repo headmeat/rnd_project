@@ -261,7 +261,7 @@ val schema2 = StructType(
   subcd_byDepart_List = t1
 } //학번 루프 끝
 
-  subcd_star_byDepart_Map
+  // subcd_star_byDepart_Map
 //----------------------------------------------------------------------------------------------------------------------------
 
 //최종적인 학번 별 별점 리스트 값이 들어있는 시퀀스
@@ -523,7 +523,6 @@ MongoSpark.save(
     var user_sim_ncr_df = user_sim_tuples_ncr.toDF("STD_NO", "ncr_similarity")
     var user_sim_acting_df = user_sim_tuples_act.toDF("STD_NO", "acting_similarity")
 
-
     var join_df_temp1 = user_sim_sbjt_df.join(user_sim_ncr_df, Seq("STD_NO"), "outer")
     var join_df_temp2 = join_df_temp1.join(user_sim_acting_df, Seq("STD_NO"), "outer")
     val user_sim_join_df = join_df_temp2.join(user_sim_df, Seq("STD_NO"), "outer")
@@ -535,8 +534,6 @@ MongoSpark.save(
         .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
         .mode("overwrite")
       )
-
-
 //============================유사도(연희,소민) end=======================================
 user_sim_join_df
 }
