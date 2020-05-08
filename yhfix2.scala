@@ -167,11 +167,11 @@ var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).
 // var departNM = "컴퓨터공학과"
 var stdNO_in_departNM_ncr = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).rdd.map(r=>r(0)).collect.toList
 
-case class starPoint(subcd:String, starpoint:Any)
+case class starPoint2(subcd:String, starpoint2:Any)
 
 // Map 타입의 변수 (string, Array)를 인자로 받음
 // String : 학번, Array : (중분류, 별점)
-val subcd_star_byDepart_Map = collection.mutable.Map[String, Array[starPoint]]()
+val subcd_star_byDepart_Map = collection.mutable.Map[String, Array[starPoint2]]()
 val subcd_byDepart_Map_temp = collection.mutable.Map[String, Array[String]]()
 var subcd_byDepart_List = List[Any]()
 
@@ -223,7 +223,7 @@ val schema2 = StructType(
         val str = row.toString
         val size = str.length
         val res = str.substring(1, size-1).split(",")
-        val starP = starPoint(res(0), res(1))
+        val starP = starPoint2(res(0), res(1))
         starP
       }
       // println(subcd_star_temp)
@@ -293,7 +293,7 @@ for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 f
     k+=1;
     }
     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-    star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
+    star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint2)
     // println(s"$star_point_List")
   }
   val star_list = star_point_List.map(x => x.toString.toDouble)
@@ -436,7 +436,8 @@ join_df.show
 MongoSpark.save(
   join_df.write
     .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY")
-    .mode("overwrite"))
+    .mode("overwrite")
+  )
 
     // mongodb collection 제거
     // db.USER_SIMILARITY.drop()
@@ -529,7 +530,8 @@ MongoSpark.save(
     MongoSpark.save(
     user_sim_join_df.write
         .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
-        .mode("overwrite"))
+        .mode("overwrite")
+      )
 
 
 //============================유사도(연희,소민) end=======================================
