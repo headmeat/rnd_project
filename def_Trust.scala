@@ -1,4 +1,4 @@
-def TRUST(applyComlist:org.apache.spark.sql.DataFrame, searchComlist:org.apache.spark.sql.DataFrame, gStdComList:org.apache.spark.sql.DataFrame):org.apache.spark.sql.DataFrame={
+def TRUST(applyComlist:DataFrame, searchComlist:DataFrame, gStdComList:DataFrame):(DataFrame, DataFrame)={
 val corps_applyComlist = applyComlist.collect.map(_.toSeq).flatten
 val corps_searchComlist = searchComlist.collect.map(_.toSeq).flatten
 val corps_gStdComList = gStdComList.collect.map(_.toSeq).flatten
@@ -6,34 +6,30 @@ val corps_gStdComList = gStdComList.collect.map(_.toSeq).flatten
 val getGstdInfo = getMongoDF(spark, gradCorpUri) //test
 val getGstdInfo_ = getGstdInfo.select("*") //rdd2
 
-def categ(corps_applyComlist: Array[Any]):scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]={
+def categ1(corps_applyComlist: Array[Any]):scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]={
      var a = scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]()
      for(i<-0 until corps_applyComlist.size){
      a = a+(corps_applyComlist(i)->getGstdInfo_.filter(getGstdInfo_("GCI_CORP_NM")===corps_applyComlist(i)).collect)
      }
      a}
 
-def categ1(corps_searchComlist: Array[Any]):scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]={
+def categ2(corps_searchComlist: Array[Any]):scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]={
      var a = scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]()
      for(i<-0 until corps_searchComlist.size){
      a = a+(corps_searchComlist(i)->getGstdInfo_.filter(getGstdInfo_("GCI_CORP_NM")===corps_searchComlist(i)).collect)
      }
      a}
 
-def categ2(corps_gStdComList: Array[Any]):scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]={
+def categ3(corps_gStdComList: Array[Any]):scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]={
      var a = scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]()
      for(i<-0 until corps_gStdComList.size){
      a = a+(corps_gStdComList(i)->getGstdInfo_.filter(getGstdInfo_("GCI_CORP_NM")===corps_gStdComList(i)).collect)
      }
      a}
 
-val corps1 = categ(corps_applyComlist)
-val corps2 = categ1(corps_searchComlist)
-val corps3 = categ2(corps_gStdComList)
-
-corps1.size
-corps2.size
-corps3.size
+val corps1 = categ1(corps_applyComlist)
+val corps2 = categ2(corps_searchComlist)
+val corps3 = categ3(corps_gStdComList)
 
 var final_corps = scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]()
 
@@ -77,8 +73,7 @@ for(i<-0 until final_corps.size){
 val df = tuples.toDF("GCI_STD_NO", "TRUST")
 
 val test0 = getMongoDF(spark, "CPS_STAR_POINT")
-var con = test0.select(col("STAR_KEY_ID"), col("STAR_POINT"))
-var con1 = con.groupBy("STAR_KEY_ID").agg(avg("STAR_POINT").alias("STAR_POINT"))
+var con1 = test0.select(col("STAR_KEY_ID"), col("STAR_POINT")).groupBy("STAR_KEY_ID").agg(avg("STAR_POINT").alias("STAR_POINT"))
 
 //코드 다 실행하고 결과 출력해보는 거
 df.show()
@@ -131,7 +126,7 @@ val scores = df_out_join.select(col("STD_NO"), col("TRUST"), col("ACT_SCORE")).c
 
 var user_trust = Seq[(Int, Double)]() //최종 신뢰도가 들어갈 시퀀스
 
-for(i<-0 until scores.size){ //코드가 너무 조잡함. 보기 추함. 정리 필요.
+for(i<-0 until scores.size){
   //scores의 1:학번, 2:기업점수, 3:활동점수가 순서대로 들어감.
   var std_no = scores(i)(0)
   var trust = scores(i)(1)
@@ -144,5 +139,5 @@ for(i<-0 until scores.size){ //코드가 너무 조잡함. 보기 추함. 정리
 
 var user_trust_df = user_trust.toDF("STD_NO", "TRUST") //최종 결과를 데이터프레임으로 만듬
 
-user_trust_df
+(user_trust_df, con1)
 }
