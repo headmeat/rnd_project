@@ -4,14 +4,14 @@ import spark.implicits._
 
 
 var stdNo = 20152611
-def calSim (spark:SparkSession, stdNo: Int) : DataFrame = {
+def calSim (spark:SparkSession, std_NO: Int) : DataFrame = {
 //============================유사도(연희,소민)start=======================================
 
 //-------------------- # # # 교과목 리스트 # # # --------------------------------
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 
-var std_NO = 20152611
+// var std_NO = 20152611
 
 // 2-1. 학과
 var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
@@ -45,7 +45,7 @@ var arr01 = Array(20142820, 20142932, 20152611)
 
 case class starPoint(sbjtCD:String, starpoint:Any)
 
-var sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
+var sbjtCD_star_byStd_Map = stdNO_in_departNM_List.flatMap{ stdNO =>
   // 학번 별 학번-교과코드-별점
   val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
 
@@ -62,7 +62,7 @@ var sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
 
 var sbjt_tuples = Seq[(String, List[Double])]()
 
-for(s<-0 until sbjtCD_star_byStd_Map.size){
+for(s<-0 until stdNO_in_departNM_List.size){
   var star_point_List = List[Any]() // 학번당 별점을 저장
   var orderedIdx_byStd = List[Int]() //학번 당 교과 리스트
   var not_orderedIdx_byStd = List[Int]()
@@ -71,10 +71,10 @@ for(s<-0 until sbjtCD_star_byStd_Map.size){
       star_point_List = 0.0::star_point_List
   }
 
-  var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${arr01(s)}")).select(col("SBJT_KEY_CD"))
+  var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${stdNO_in_departNM_List(s)}")).select(col("SBJT_KEY_CD"))
   var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
-  var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${arr01(s)}")).select("STAR_KEY_ID").collect.map({row=>
+  var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO_in_departNM_List(s)}")).select("STAR_KEY_ID").collect.map({row=>
      val str = row.toString
      val size = str.length
      val res = str.substring(1, size-1).split(",")
@@ -83,7 +83,7 @@ for(s<-0 until sbjtCD_star_byStd_Map.size){
 
   var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
 
-  var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(arr01(s).toString) //!
+  var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(stdNO_in_departNM_List(s).toString) //!
 
   for(i<-0 until valueBystdNo_from_Map.size){
     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
@@ -121,7 +121,7 @@ for(s<-0 until sbjtCD_star_byStd_Map.size){
 
   val star_list = star_point_List.map(x => x.toString.toDouble)
   println(">>"+star_list)
-  sbjt_tuples = sbjt_tuples :+ (arr01(s).toString, star_list)
+  sbjt_tuples = sbjt_tuples :+ (stdNO_in_departNM_List(s).toString, star_list)
 }
 
 var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT_STAR")
@@ -191,7 +191,7 @@ val schema2 = StructType(
     StructField("NPI_AREA_SUB_CD", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
 
-  arr01.foreach{ stdNO =>
+  stdNO_in_departNM_ncr.foreach{ stdNO =>
     var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
     var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
@@ -267,7 +267,7 @@ val schema2 = StructType(
 //최종적인 학번 별 별점 리스트 값이 들어있는 시퀀스
 var ncr_tuples = Seq[(String, List[Double])]()
 
-for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 for문
+for(s<-0 until stdNO_in_departNM_ncr.size){ // 학과 학생 학번 List 를 for문
   var star_point_List = List[Any]() // 학번당 별점을 저장
   var orderedIdx_byStd = List[Int]() //학번 당 중분류 리스트
   //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 초기화
@@ -276,7 +276,7 @@ for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 f
   }
 
   //학과 모든 학생의 중분류-별점 Map 에서 학번 하나의 값(중분류-별점)을 가져옴(Map연산을 위해 toString으로 변환)
-  var valueBystdNo_from_Map = subcd_star_byDepart_Map(arr01(s).toString)
+  var valueBystdNo_from_Map = subcd_star_byDepart_Map(stdNO_in_departNM_ncr(s).toString)
 
   for(i<-0 until valueBystdNo_from_Map.size){
     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
@@ -301,7 +301,7 @@ for(s<-0 until subcd_star_byDepart_Map.size){ // 학과 학생 학번 List 를 f
   }
   val star_list = star_point_List.map(x => x.toString.toDouble)
   // println(">>"+star_list)
-  ncr_tuples = ncr_tuples :+ (arr01(s).toString, star_list)
+  ncr_tuples = ncr_tuples :+ (stdNO_in_departNM_ncr(s).toString, star_list)
 }
 
 var ncr_df = ncr_tuples.toDF("STD_NO", "NCR_STAR")
@@ -331,7 +331,7 @@ var depart_activity_List = List[Any]()
 var activity_List_byStd = List[Any]()
 var act_tuples = Seq[(String, List[Int])]()
 //광홍과 학번을 돌면서
-arr02.foreach{ stdNO =>
+stdNO_in_departNM_act.foreach{ stdNO =>
 
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
 
@@ -449,8 +449,8 @@ MongoSpark.save(
     userforSimilarity_df = userforSimilarity_df.drop("_id")
 
     //질의자
-    var querySTD_NO = 20142820
-    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${querySTD_NO}")).drop("STD_NO")
+    // var querySTD_NO = 20142820
+    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${std_NO}")).drop("STD_NO")
 
     val exStr = "WrappedArray|\\(|\\)|\\]|\\["
 
@@ -484,7 +484,7 @@ MongoSpark.save(
     stdNO_inDepart_List.foreach(stdNO => {
       // var i = 0; //토탈 구해줄 떄 바꿀라고
 
-      println(stdNO)
+      // println(stdNO)
       //유사사용자
       var std_inDepart = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${stdNO}")).drop("STD_NO")
       var std_inDepart_List = std_inDepart.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
@@ -523,6 +523,7 @@ MongoSpark.save(
     var user_sim_ncr_df = user_sim_tuples_ncr.toDF("STD_NO", "ncr_similarity")
     var user_sim_acting_df = user_sim_tuples_act.toDF("STD_NO", "acting_similarity")
 
+
     var join_df_temp1 = user_sim_sbjt_df.join(user_sim_ncr_df, Seq("STD_NO"), "outer")
     var join_df_temp2 = join_df_temp1.join(user_sim_acting_df, Seq("STD_NO"), "outer")
     val user_sim_join_df = join_df_temp2.join(user_sim_df, Seq("STD_NO"), "outer")
@@ -534,6 +535,7 @@ MongoSpark.save(
         .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
         .mode("overwrite")
       )
+
 //============================유사도(연희,소민) end=======================================
 user_sim_join_df
 }
