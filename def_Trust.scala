@@ -6,6 +6,7 @@ val corps_gStdComList = gStdComList.collect.map(_.toSeq).flatten
 val getGstdInfo = getMongoDF(spark, gradCorpUri) //test
 val getGstdInfo_ = getGstdInfo.select("*") //rdd2
 
+//categ# 함수는 기업을 카테고리 별로 분류하기 위한 함수
 def categ1(corps_applyComlist: Array[Any]):scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]={
      var a = scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]()
      for(i<-0 until corps_applyComlist.size){
@@ -30,8 +31,8 @@ def categ3(corps_gStdComList: Array[Any]):scala.collection.mutable.Map[Any, Arra
 val corps1 = categ1(corps_applyComlist)
 val corps2 = categ2(corps_searchComlist)
 val corps3 = categ3(corps_gStdComList)
-
-var final_corps = scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]()
+	
+var final_corps = scala.collection.mutable.Map[Any, Array[org.apache.spark.sql.Row]]() //최종 기업 목록
 
 if(corps1.size >= 10){
 	final_corps = corps1
@@ -73,9 +74,9 @@ for(i<-0 until final_corps.size){
 val df = tuples.toDF("GCI_STD_NO", "TRUST")
 
 val test0 = getMongoDF(spark, "CPS_STAR_POINT")
-var con1 = test0.select(col("STAR_KEY_ID"), col("STAR_POINT")).groupBy("STAR_KEY_ID").agg(avg("STAR_POINT").alias("STAR_POINT"))
+var con1 = test0.select(col("STAR_KEY_ID"), col("STAR_POINT")).groupBy("STAR_KEY_ID").agg(avg("STAR_POINT").alias("STAR_POINT")) //콘텐츠 신뢰도 데이터프레임
 
-//코드 다 실행하고 결과 출력해보는 거
+//코드 다 실행하고 결과 출력
 df.show()
 con1.show() //중분류에 대한 신뢰도
 
@@ -127,7 +128,7 @@ val scores = df_out_join.select(col("STD_NO"), col("TRUST"), col("ACT_SCORE")).c
 var user_trust = Seq[(Int, Double)]() //최종 신뢰도가 들어갈 시퀀스
 
 for(i<-0 until scores.size){
-  //scores의 1:학번, 2:기업점수, 3:활동점수가 순서대로 들어감.
+  //scores(i)의 1:학번, 2:기업점수, 3:활동점수가 순서대로 들어감.
   var std_no = scores(i)(0)
   var trust = scores(i)(1)
   var act_score = scores(i)(2)
