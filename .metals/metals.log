@@ -12935,3 +12935,9 @@ Caused by: java.nio.file.NoSuchFileException: C:\rnd_project\0511.scala
 WARN  no build target: C:\rnd_project\sim_function.scala
   C:\rnd_project\sim_function.scala
   C:\rnd_project\sim_function.scala
+WARN  no build target: C:\rnd_project\0511.scala
+  C:\rnd_project\0511.scala
+  C:\rnd_project\def_Trust.scala
+  C:\rnd_project\def_Trust.scala
+  C:\rnd_project\final_result.scala0508.scala
+  C:\rnd_project\final_result.scala0508.scala
