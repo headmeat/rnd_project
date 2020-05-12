@@ -4,14 +4,14 @@ import spark.implicits._
 
 
 var stdNo = 20152611
-def calSim (spark:SparkSession, stdNo: Int) : DataFrame = {
+def calSim (spark:SparkSession, std_NO: Int) : DataFrame = {
 //============================유사도(연희,소민)start=======================================
 
 //-------------------- # # # 교과목 리스트 # # # --------------------------------
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 
-var std_NO = 20152611
+// var std_NO = 20152611
 
 // 2-1. 학과
 var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
@@ -45,7 +45,7 @@ var arr01 = Array(20142820, 20142932, 20152611)
 
 case class starPoint(sbjtCD:String, starpoint:Any)
 
-var sbjtCD_star_byStd_Map = arr01.flatMap{ stdNO =>
+var sbjtCD_star_byStd_Map = stdNO_in_departNM_List.flatMap{ stdNO =>
   // 학번 별 학번-교과코드-별점
   val star_temp_bystdNO_DF = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO}"))
 
@@ -255,7 +255,7 @@ val schema2 = StructType(
     StructField("NPI_AREA_SUB_CD", StringType, true) ::
     StructField("NPI_KEY_ID", StringType, true) :: Nil)
 
-  arr01.foreach{ stdNO =>
+  stdNO_in_departNM_ncr.foreach{ stdNO =>
     var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
     var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
@@ -434,7 +434,7 @@ var depart_activity_List = List[Any]()
 var activity_List_byStd = List[Any]()
 var act_tuples = Seq[(String, List[Int])]()
 //광홍과 학번을 돌면서
-arr02.foreach{ stdNO =>
+stdNO_in_departNM_act.foreach{ stdNO =>
 
   var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
 
@@ -552,8 +552,8 @@ MongoSpark.save(
     userforSimilarity_df = userforSimilarity_df.drop("_id")
 
     //질의자
-    var querySTD_NO = 20142820
-    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${querySTD_NO}")).drop("STD_NO")
+    // var querySTD_NO = 20142820
+    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${std_NO}")).drop("STD_NO")
 
     val exStr = "WrappedArray|\\(|\\)|\\]|\\["
 
@@ -587,7 +587,7 @@ MongoSpark.save(
     stdNO_inDepart_List.foreach(stdNO => {
       // var i = 0; //토탈 구해줄 떄 바꿀라고
 
-      println(stdNO)
+      // println(stdNO)
       //유사사용자
       var std_inDepart = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${stdNO}")).drop("STD_NO")
       var std_inDepart_List = std_inDepart.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
@@ -626,6 +626,7 @@ MongoSpark.save(
     var user_sim_ncr_df = user_sim_tuples_ncr.toDF("STD_NO", "ncr_similarity")
     var user_sim_acting_df = user_sim_tuples_act.toDF("STD_NO", "acting_similarity")
 
+
     var join_df_temp1 = user_sim_sbjt_df.join(user_sim_ncr_df, Seq("STD_NO"), "outer")
     var join_df_temp2 = join_df_temp1.join(user_sim_acting_df, Seq("STD_NO"), "outer")
     val user_sim_join_df = join_df_temp2.join(user_sim_df, Seq("STD_NO"), "outer")
@@ -637,6 +638,7 @@ MongoSpark.save(
         .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
         .mode("overwrite")
       )
+
 //============================유사도(연희,소민) end=======================================
 user_sim_join_df
 }
