@@ -1,7 +1,9 @@
-import org.apache.spark.sql.types.{StructType, StructField, StringType, IntegerType}
-import org.apache.spark.sql.Row
-import spark.implicits._
+val sparkConf = new SparkConf().setAppName("Empty-DataFrame").setMaster("local")
+// val sc = new SparkContext(sparkConf)
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
+import sqlContext.implicits._
+import org.apache.spark.sql.types.{StructType,StructField,StringType}
 
 var stdNo = 20152611
 def calSim (spark:SparkSession, std_NO: Int) : DataFrame = {
@@ -11,22 +13,37 @@ def calSim (spark:SparkSession, std_NO: Int) : DataFrame = {
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 
-var std_NO = 20152611
+// /*^^
+// var std_NO = 20152611
+//
+// // 2-1. 학과
+// var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+// var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+// var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
+// ^^*/
 
-// 2-1. 학과
+val schema_string = "ComList"
+val schema_rdd = StructType(schema_string.split(",").map(fieldName => StructField(fieldName, StringType, true)) )
+
 var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
-var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+var departNM_by_stdNO = spark.createDataFrame(sc.emptyRDD[Row], schema_rdd)
+
+try{
+  departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
+}
+catch{
+  case e: NoSuchElementException => println("ERROR!")
+  val empty_df = sqlContext.createDataFrame(sc.emptyRDD[Row], schema_rdd)
+  empty_df
+}
 var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
+
 
 // 2-2. 학과 학생 리스트
 var stdNO_in_departNM_sbjt = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct
 // var stdNO_in_departNM_sbjt = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.limit(10)
 var stdNO_in_departNM_List = stdNO_in_departNM_sbjt.rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
-// 3-1. 학생의 수업 리스트
-//^^
-// var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KEY_CD"))
-// var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
 // 3-2. 학과의 수업 리스트
 // 컴퓨터공학과에서 개설된 수업명을 리스트로 생성 : 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
@@ -124,123 +141,10 @@ stdNO_in_departNM_List.foreach{ stdNo =>
       // println(s"$star_point_List")
     }
   }
-  // var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(s"${stdNo}") //!
-  // for(i<-0 until valueBystdNo_from_Map.size){
-  //   //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
-  //   //학생 한명이 들은 중분류 리스트를 가져옴
-  //   orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(valueBystdNo_from_Map(i).sbjtCD)::orderedIdx_byStd
-  //   // println("orderedIdx_byStd ===> " + orderedIdx_byStd)
-  // }
-  //
-  // println(orderedIdx_byStd)
-  // for(i<-0 until not_rated.size){
-  //   not_orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(not_rated(i).toString)::not_orderedIdx_byStd
-  //   // println("not_orderedIdx_byStd ===> " + not_orderedIdx_byStd)
-  // }
-  //
-  // orderedIdx_byStd = orderedIdx_byStd.sorted
-  // // println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
-  //
-  // not_orderedIdx_byStd = not_orderedIdx_byStd.sorted
-  // // println("not_orderedIdx_byStd ===>" + not_orderedIdx_byStd)
-  //
-  // for(i<-0 until not_orderedIdx_byStd.size){
-  //   star_point_List = star_point_List.updated(not_orderedIdx_byStd(i), -1)
-  // }
-
-  // if(orderedIdx_byStd.size != 0){
-    // for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
-    //   var k=0;
-    //   //print(k)
-    //   // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-    //   while(sbjtCD_in_departNM_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).sbjtCD){
-    //   k+=1;
-    //   }
-    //   // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-    //   star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
-    //   // println(s"$star_point_List")
-    // }
-  // }
-  //
-  // for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
-  //   var k=0;
-  //   //print(k)
-  //   // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-  //   while(sbjtCD_in_departNM_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).sbjtCD){
-  //   k+=1;
-  //   }
-  //   // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-  //   star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
-  //   // println(s"$star_point_List")
-  // }
-  //
   val star_list = star_point_List.map(x => x.toString.toDouble)
   // println(">>"+star_list)
   sbjt_tuples = sbjt_tuples :+ (stdNo.toString, star_list)
-
 }
-
-// for(s<-0 until stdNO_in_departNM_List.size){
-//   var star_point_List = List[Any]() // 학번당 별점을 저장
-//   var orderedIdx_byStd = List[Int]() //학번 당 교과 리스트
-//   var not_orderedIdx_byStd = List[Int]()
-//
-//   for(i<-0 until sbjtCD_in_departNM_List.size){
-//       star_point_List = 0.0::star_point_List
-//   }
-//
-//   var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${stdNO_in_departNM_List(s)}")).select(col("SBJT_KEY_CD"))
-//   var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
-//
-//   var getStar_by_stdNO = cpsStarUri_sbjt_DF.filter(cpsStarUri_sbjt_DF("STD_NO").equalTo(s"${stdNO_in_departNM_List(s)}")).select("STAR_KEY_ID").collect.map({row=>
-//      val str = row.toString
-//      val size = str.length
-//      val res = str.substring(1, size-1).split(",")
-//      val list_ = res(0)
-//      list_})
-//
-//   var not_rated = sbjtNM_by_stdNO_List filterNot getStar_by_stdNO.contains
-//
-//   var valueBystdNo_from_Map = sbjtCD_star_byStd_Map(stdNO_in_departNM_List(s).toString) //!
-//
-//   for(i<-0 until valueBystdNo_from_Map.size){
-//     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
-//     //학생 한명이 들은 중분류 리스트를 가져옴
-//     orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(valueBystdNo_from_Map(i).sbjtCD)::orderedIdx_byStd
-//     // println("orderedIdx_byStd ===> " + orderedIdx_byStd)
-//   }
-//
-//   for(i<-0 until not_rated.size){
-//     not_orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(not_rated(i).toString)::not_orderedIdx_byStd
-//     // println("not_orderedIdx_byStd ===> " + not_orderedIdx_byStd)
-//   }
-//
-//   orderedIdx_byStd = orderedIdx_byStd.sorted
-//   // println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
-//
-//   not_orderedIdx_byStd = not_orderedIdx_byStd.sorted
-//   println("not_orderedIdx_byStd ===>" + not_orderedIdx_byStd)
-//
-//   for(i<-0 until not_orderedIdx_byStd.size){
-//     star_point_List = star_point_List.updated(not_orderedIdx_byStd(i), -1)
-//   }
-//
-//   for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
-//     var k=0;
-//     //print(k)
-//     // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-//     while(sbjtCD_in_departNM_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).sbjtCD){
-//     k+=1;
-//     }
-//     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-//     star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint)
-//     // println(s"$star_point_List")
-//   }
-//
-//   val star_list = star_point_List.map(x => x.toString.toDouble)
-//   println(">>"+star_list)
-//   sbjt_tuples = sbjt_tuples :+ (stdNO_in_departNM_List(s).toString, star_list)
-// }
 
 var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT_STAR")
 
@@ -427,42 +331,6 @@ stdNO_in_departNM_ncr.foreach{ stdNo =>
   // println(">>"+star_list)
   ncr_tuples = ncr_tuples :+ (stdNo, star_list)
 }
-// for(s<-0 until stdNO_in_departNM_ncr.size){ // 학과 학생 학번 List 를 for문
-//   var star_point_List = List[Any]() // 학번당 별점을 저장
-//   var orderedIdx_byStd = List[Int]() //학번 당 중분류 리스트
-//   //학과 전체 중분류 코드 List => 학번당 별점을 중분류 갯수만금 0.0으로 초기화
-//   for(i<-0 until subcd_byDepart_List.size){
-//     star_point_List = 0.0::star_point_List
-//   }
-//
-//   //학과 모든 학생의 중분류-별점 Map 에서 학번 하나의 값(중분류-별점)을 가져옴(Map연산을 위해 toString으로 변환)
-//   var valueBystdNo_from_Map = subcd_star_byDepart_Map(stdNO_in_departNM_ncr(s).toString)
-//
-//   for(i<-0 until valueBystdNo_from_Map.size){
-//     //학생 한명의 중분류-별점 맵에서 중분류 키에 접근 : valueBystdNo_from_Map(i).subcd)
-//     //학생 한명이 들은 중분류 리스트를 가져옴
-//     orderedIdx_byStd = subcd_byDepart_List.indexOf(valueBystdNo_from_Map(i).subcd)::orderedIdx_byStd
-//     // println("orderedIdx_byStd ===> " + orderedIdx_byStd)
-//   }
-//   // orderedIdx_byStd를 정렬(중분류 코드 정렬)
-//   orderedIdx_byStd = orderedIdx_byStd.sorted
-//   // println("orderedIdx_byStdsorted ===>" + orderedIdx_byStd)
-//
-//   for(i<-0 until orderedIdx_byStd.size){ // orderedIdx_byStd 크기 (학번당 들은 중분류를 for문 돌림)
-//     var k=0;
-//     //print(k)
-//     // 학과 전체의 중분류 리스트와 학생의 중분류 리스트의 값이 같을때까지 k를 증가
-//     while(subcd_byDepart_List(orderedIdx_byStd(i))!= valueBystdNo_from_Map(k).subcd){
-//     k+=1;
-//     }
-//     // 같은 값이 나오면 0으로 설정돼있던 값을 (그 자리의 값을) 학생의 별점으로 바꿔줌
-//     star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint2)
-//     // println(s"$star_point_List")
-//   }
-//   val star_list = star_point_List.map(x => x.toString.toDouble)
-//   // println(">>"+star_list)
-//   ncr_tuples = ncr_tuples :+ (stdNO_in_departNM_ncr(s).toString, star_list)
-// }
 
 var ncr_df = ncr_tuples.toDF("STD_NO", "NCR_STAR")
 
@@ -502,11 +370,6 @@ stdNO_in_departNM_act.foreach{ stdNO =>
 
   depart_activity_temp = depart_activity_temp ++ outAct_name_List
 
-  //----------codeList + nameList = 학생 하나의 리스트-----------------------------
-  // var outAct_std_List = outAct_code_List ::: outAct_name_List
-  // outAct_std_List
-  //------------------------------------------------------------------------------
-
   //학과 리스트
   depart_activity_List = depart_activity_temp.distinct
 
@@ -528,7 +391,6 @@ stdNO_in_departNM_act.foreach{ stdNO =>
   //학생 한명의 활동 코드만 존재하는 dataframe
 
   var outAct_code_temp3 = outAct_code_temp2.drop("OAM_STD_NO", "OAM_TITLE").groupBy("OAM_TYPE_CD").count()
-
 
   //모든 학과 모든 학생이 수행한 자율활동은 총 845개인데
   //광홍과 201937039학생이 수행한 활동만 260개이고 나머지 광홍과 학생들의 데이터는 존재하지 않음
@@ -636,7 +498,16 @@ MongoSpark.save(
 
     //질의자
     // var querySTD_NO = 20142820
-    var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${std_NO}")).drop("STD_NO")
+    var querySTD = spark.createDataFrame(sc.emptyRDD[Row], schema_rdd)
+
+    try{
+      querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${std_NO}")).drop("STD_NO")
+    }
+    catch{
+      case e: NoSuchElementException => println("ERROR!")
+      val empty_df = sqlContext.createDataFrame(sc.emptyRDD[Row], schema_rdd)
+      empty_df
+    }
 
     val exStr = "WrappedArray|\\(|\\)|\\]|\\["
 
