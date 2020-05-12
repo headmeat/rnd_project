@@ -11,7 +11,7 @@ def calSim (spark:SparkSession, std_NO: Int) : DataFrame = {
 //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
 //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 
-// var std_NO = 20152611
+var std_NO = 20152611
 
 // 2-1. 학과
 var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
@@ -62,9 +62,9 @@ var sbjtCD_star_byStd_Map = stdNO_in_departNM_List.flatMap{ stdNO =>
 
 var sbjt_tuples = Seq[(String, List[Double])]()
 
-var stdNo_List_byMap = sbjtCD_star_byStd_Map.keys.toList
+var stdNo_List_byMap_sbjt = sbjtCD_star_byStd_Map.keys.toList
 
-stdNo_List_byMap.foreach{ stdNo =>
+stdNo_List_byMap_sbjt.foreach{ stdNo =>
   var star_point_List = List[Any]() // 학번당 별점을 저장
   var orderedIdx_byStd = List[Int]() //학번 당 교과 리스트
   var not_orderedIdx_byStd = List[Int]()
@@ -433,6 +433,27 @@ var depart_activity_temp = List[Any]()
 var depart_activity_List = List[Any]()
 var activity_List_byStd = List[Any]()
 var act_tuples = Seq[(String, List[Int])]()
+
+stdNO_in_departNM_act.foreach{ stdNO =>
+
+  var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"), col("OAM_TITLE"), col("OAM_TYPE_CD")).distinct
+  //3개의 코드만 필터링
+  var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
+
+  var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
+
+  depart_activity_temp = depart_activity_temp ++ outAct_name_List
+
+  //----------codeList + nameList = 학생 하나의 리스트-----------------------------
+  // var outAct_std_List = outAct_code_List ::: outAct_name_List
+  // outAct_std_List
+  //------------------------------------------------------------------------------
+
+  //학과 리스트
+  depart_activity_List = depart_activity_temp.distinct
+
+}
+
 //광홍과 학번을 돌면서
 stdNO_in_departNM_act.foreach{ stdNO =>
 
@@ -449,6 +470,7 @@ stdNO_in_departNM_act.foreach{ stdNO =>
   //학생 한명의 활동 코드만 존재하는 dataframe
 
   var outAct_code_temp3 = outAct_code_temp2.drop("OAM_STD_NO", "OAM_TITLE").groupBy("OAM_TYPE_CD").count()
+
 
   //모든 학과 모든 학생이 수행한 자율활동은 총 845개인데
   //광홍과 201937039학생이 수행한 활동만 260개이고 나머지 광홍과 학생들의 데이터는 존재하지 않음
@@ -480,15 +502,15 @@ stdNO_in_departNM_act.foreach{ stdNO =>
 
   var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
 
-  depart_activity_temp = depart_activity_temp ++ outAct_name_List
-
-  //----------codeList + nameList = 학생 하나의 리스트-----------------------------
-  // var outAct_std_List = outAct_code_List ::: outAct_name_List
-  // outAct_std_List
-  //------------------------------------------------------------------------------
-
-  //학과 리스트
-  depart_activity_List = depart_activity_temp.distinct
+  // depart_activity_temp = depart_activity_temp ++ outAct_name_List
+  //
+  // //----------codeList + nameList = 학생 하나의 리스트-----------------------------
+  // // var outAct_std_List = outAct_code_List ::: outAct_name_List
+  // // outAct_std_List
+  // //------------------------------------------------------------------------------
+  //
+  // //학과 리스트
+  // depart_activity_List = depart_activity_temp.distinct
   // println("depart::::::::::::" + depart_activity_List)
 
   //namelist로 유무 비교
@@ -499,14 +521,14 @@ stdNO_in_departNM_act.foreach{ stdNO =>
     //0 : record_2
     //isListend면 1로 바뀜
     val actName = activity._1
-    println("actName ===> " + actName)
+    // println("actName ===> " + actName)
     val act =
       if(outAct_name_List.contains(actName)) {
         1
       }
       else 0
     var activity_List_byStd_temp2 = (actName, act)
-    print(activity_List_byStd_temp2)
+    // println(activity_List_byStd_temp2)
     //리턴하려면 이름을 쳐야 함
     //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
     activity_List_byStd_temp2
@@ -521,6 +543,8 @@ stdNO_in_departNM_act.foreach{ stdNO =>
  activity_List_byStd = head ++ activity_List_byStd_temp3
 
  val act_list = activity_List_byStd.map(x => x.toString.toInt)
+ println("head" + head)
+ println("act_List" + act_list)
 
  act_tuples = act_tuples :+ (stdNO, act_list)
 }
@@ -587,7 +611,7 @@ MongoSpark.save(
     stdNO_inDepart_List.foreach(stdNO => {
       // var i = 0; //토탈 구해줄 떄 바꿀라고
 
-      // println(stdNO)
+      println(stdNO)
       //유사사용자
       var std_inDepart = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${stdNO}")).drop("STD_NO")
       var std_inDepart_List = std_inDepart.collect.toList.mkString.replaceAll(exStr, "").split(",").map(x => (x.trim.toDouble * 10).toInt)
@@ -626,7 +650,6 @@ MongoSpark.save(
     var user_sim_ncr_df = user_sim_tuples_ncr.toDF("STD_NO", "ncr_similarity")
     var user_sim_acting_df = user_sim_tuples_act.toDF("STD_NO", "acting_similarity")
 
-
     var join_df_temp1 = user_sim_sbjt_df.join(user_sim_ncr_df, Seq("STD_NO"), "outer")
     var join_df_temp2 = join_df_temp1.join(user_sim_acting_df, Seq("STD_NO"), "outer")
     val user_sim_join_df = join_df_temp2.join(user_sim_df, Seq("STD_NO"), "outer")
@@ -638,7 +661,6 @@ MongoSpark.save(
         .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
         .mode("overwrite")
       )
-
 //============================유사도(연희,소민) end=======================================
 user_sim_join_df
 }
