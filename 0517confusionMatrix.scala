@@ -216,3 +216,51 @@ private[ml] def evaluateClassificationModel(
   println(s"Weighted recall: ${metrics.weightedRecall}")
   println(s"Weighted F1 score: ${metrics.weightedFMeasure}")
   println(s"Weighted false positive rate: ${metrics.weightedFalsePositiveRate}")
+
+
+
+//=======================================================================
+//=======================================================================
+
+1. 정답셋 글자로?정렬??
+2. 결과셋 정렬
+3. 인덱스로 비교?
+//
+// for(i<-0 until valueBystdNo_from_Map.size){
+//   orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(valueBystdNo_from_Map(i).sbjtCD)::orderedIdx_byStd
+//   //sbjtCD_in_departNM_List.indexOf(valueBystdNo_from_Map(i).sbjtCD) ??
+//   //indexOf로 인덱스 가져오기
+// }
+//
+// for(i<-0 until not_rated.size){
+//   not_orderedIdx_byStd = sbjtCD_in_departNM_List.indexOf(not_rated(i).toString)::not_orderedIdx_byStd
+// }
+//
+// orderedIdx_byStd = orderedIdx_byStd.sorted
+//
+// for(i<-0 until not_orderedIdx_byStd.size){
+//   star_point_List = star_point_List.updated(not_orderedIdx_byStd(i), -1)
+// }
+
+
+
+//precision = List_recommend에서 일치하는 값 개수 / List_origin의 length
+//recall = List_recommend에서 일치하는 값 개수 / List_recommend의 length
+//F-measure = 2*((R*P)/(R+P))
+
+
+val list_origin = List("삼성", "네이버", "카카오", "다음", "구글", "하이닉스", "대우", "한화", "엔씨소프트", "현대")
+val list_recommend =  List("LG", "삼성", "카카오", "다음", "하이닉스")
+
+
+var contain_count = 0
+list_recommend.foreach{ list =>
+  if(list_origin.contains(list)){
+    contain_count = contain_count+1
+  }
+  contain_count
+}
+
+val precision = contain_count.toFloat/list_origin.length
+val recall = contain_count.toFloat/list_recommend.length
+val f_measure = 2*((recall*precision)/(recall+precision))
