@@ -30,7 +30,7 @@ val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
 val Result_output_base = "mongodb://127.0.0.1/cpmongo_distinct.Recommend_Result"
 
 val comRatingUri = "CPS_RATING"
-val sjobSrhUri = "CPS_EMPLOY_SEARCH_HIS"  
+val sjobSrhUri = "CPS_EMPLOY_SEARCH_HIS"
 val replyUri = "CPS_BOARD_REPLY"  //댓글
 val codeUri = "CPS_CODE_MNG"  //통합 코드관리 테이블
 val gradCorpUri = "CPS_GRADUATE_CORP_INFO"  //졸업 기업 // <<관심기업팀>>
@@ -118,7 +118,7 @@ val pfInfoUri_table =  getMongoDF(spark, pfInfoUri)  //교수 정보 (professor 
 val clInfoUri_table =  getMongoDF(spark, clInfoUri)  //교과 정보 (class info)
 
 val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별점 테이블
-val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사도 분석 팀이 생성한 테이블
+// val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사도 분석 팀이 생성한 테이블
 
 
 
@@ -1337,5 +1337,3 @@ Result_All.sort("Rank").show
 setMongoDF_result(spark, Result_All)
 
 //============================추천결과생성(보경,도웅) end=======================================
-
-

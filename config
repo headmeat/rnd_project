@@ -12,5 +12,5 @@ oracle_pass  = cpsrndver123
 
 
 //version
-mongon_version =
-python_version = 3
+mongon_version = 4.2.3
+python_version = 3.6.8
