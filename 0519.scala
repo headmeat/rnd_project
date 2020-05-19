@@ -325,17 +325,60 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     (user_trust_df, con1)
   }
 
+
+
+
+
+
   //유사도 함수
+  var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+
+
+  var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+  //var cpsStarUri_DF_ncr = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+
+  var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
+
+  var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
+
+
   def calSim (spark:SparkSession, std_NO: Int) : DataFrame = {
     //============================유사도(연희,소민)start=======================================
 
     //-------------------- # # # 교과목 리스트 # # # --------------------------------
     //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
     //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
+
+    //// 최종 Running Runtime 확인
+    import java.util.concurrent.TimeUnit.NANOSECONDS
+    def time[T](f: => T): T = {
+      val start = System.nanoTime()
+      val ret = f
+      val end = System.nanoTime() // scalastyle:off println
+      println(s"Time taken: ${NANOSECONDS.toMillis(end - start)} ms")
+      // scalastyle:on println
+      ret
+    }
+
+    //!!!
+    var std_NO = 20152611
+
+    var stdarr = Array(20142820, 20142932, 20152611)
+
+    stdarr.foreach(x =>{
+      spark.time(sbjtFunc(spark, x))
+    })
+
+
+    sbjtFunc(spark, 20152611)
+
+    //!!!
+    def sbjtFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
+
     val schema_string = "Similarity"
     val schema_rdd = StructType(schema_string.split(",").map(fieldName => StructField(fieldName, StringType, true)) )
-
-    var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+    //!!!
+    // var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
     var departNM_by_stdNO = spark.createDataFrame(sc.emptyRDD[Row], schema_rdd)
 
     try{
@@ -364,7 +407,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
 
     //학과의 모든 학번(key)이 들은 교과목코드-별점 Map
 
-    var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+    //!!!
+    //var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
     // 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
 
     //STAR_KEY_ID(교과목코드, sbjtCD), STAR_POINT이 있는 dataframe
@@ -458,6 +502,10 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     }
 
     var sbjt_df = sbjt_tuples.toDF("STD_NO", "SUBJECT_STAR")
+    sbjt_df
+  }
+
+
 
     //======================================================================================================
     //======================================================================================================
@@ -475,12 +523,14 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
 
     // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
 
-    var cpsStarUri_DF_ncr = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+    def ncrFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
+
+    var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
     // from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
     var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 
     // 비교과 별점 => 별점 테이블에서 "TYPE"이 "N" :: ex) NCR000000000677
-    var cpsStarUri_DF_ncr_typeN = cpsStarUri_DF_ncr.filter(cpsStarUri_DF_ncr("TYPE").equalTo("N"))
+    var cpsStarUri_DF_ncr_typeN = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("N"))
     // 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
     val schema1 = StructType(
       StructField("STAR_POINT", StringType, true) ::
@@ -501,14 +551,14 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     //----------------------------------------------------------------------------------------------------------------------------
 
     //-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
-    var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+    //!!!
+    //var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
 
     //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
     //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
 
     var departNM = "컴퓨터공학과"
-    var stdNO_in_departNM_ncr = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
-    // var stdNO_in_departNM_ncr = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.limit(10).rdd.map(r=>r(0)).collect.toList.map(_.toString)
+    var stdNO_in_departNM_ncr = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
     // Map 타입의 변수 (string, Array)를 인자로 받음
     // String : 학번, Array : (중분류, 별점)
     case class starPoint2(subcd:String, starpoint2:Any)
@@ -528,9 +578,9 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
       var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
       var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
-      val key_id_temp = tmp1.filter(cpsStarUri_DF_ncr("STD_NO").equalTo(s"${stdNO}"))
+      val key_id_temp = tmp1.filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
       val key_id_List_byStd = key_id_temp.rdd.map{r=> r(0)}.collect.toList
-      val getStar_by_stdNO = cpsStarUri_DF_ncr_typeN.filter(cpsStarUri_DF_ncr("STD_NO").equalTo(s"${stdNO}")).toDF
+      val getStar_by_stdNO = cpsStarUri_DF_ncr_typeN.filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}")).toDF
 
       val tmp3 = getStar_by_stdNO.select(col("STAR_POINT"),col("NPI_KEY_ID"))
 
@@ -726,7 +776,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     }
 
     var ncr_df = ncr_tuples.toDF("STD_NO", "NCR_STAR")
-
+    ncr_df
+  }
     //===========================================================================================================
     //===========================================================================================================
 
@@ -737,11 +788,11 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     //봉사(CD03), 대외활동(CD04), 기관현장실습(CD05) : 활동구분코드(OAM_TYPE_CD)
 
     var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
-    var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+    //!!!
+    //var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
     //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 
-    var stdNO_in_departNM_act = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
-    // var stdNO_in_departNM_act = clPassUri_DF_act.filter(clPassUri_DF_act("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.limit(10).rdd.map(r=>r(0)).collect.toList.map(_.toString)
+    var stdNO_in_departNM_act = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
     var arr02 = arr01.toList.map(_.toString)
 
