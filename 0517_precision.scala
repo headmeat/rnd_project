@@ -1,6 +1,6 @@
 //spark 접속 명령어: spark/bin/spark-shell --packages org.mongodb.spark:mongo-spark-connector_2.11:2.2.1
  // spark/bin/spark-shell --packages org.mongodb.spark:mongo-spark-connector_2.11:2.2.1
- 
+
 import com.mongodb.spark._
 import com.mongodb.spark.config._
 import org.apache.spark._
@@ -21,15 +21,15 @@ import scala.collection.mutable
 import sqlContext.implicits._
 import org.apache.spark.sql.types.{StructType,StructField,StringType}
 
-val base ="mongodb://127.0.0.1/cpmongo_distinct."
-val output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
-val USER_LIST_FOR_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY"
-val USER_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
-val SREG_output_base = "mongodb://127.0.0.1/cpmongo_distinct.SREG_SIM"
-val NCR_output_base = "mongodb://127.0.0.1/cpmongo_distinct.NCR_SIM"
-val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
+val base ="mongodb://127.0.0.1/cpmongo."
+val output_base = "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY"
+val USER_LIST_FOR_SIM_output_base = "mongodb://127.0.0.1/cpmongo.USER_LIST_FOR_SIMILARITY"
+val USER_SIM_output_base = "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY"
+val SREG_output_base = "mongodb://127.0.0.1/cpmongo.SREG_SIM"
+val NCR_output_base = "mongodb://127.0.0.1/cpmongo.NCR_SIM"
+val ACT_output_base = "mongodb://127.0.0.1/cpmongo.ACTIVITY_SIM"
 //교과: SREG_SIM, 비교과: NCR_SIM, 자율활동: ACTIVITY_SIM
-val Result_output_base = "mongodb://127.0.0.1/cpmongo_distinct.Recommend_Result"
+val Result_output_base = "mongodb://127.0.0.1/cpmongo.Recommend_Result"
 // val sc = new SparkContext(sparkConf) //쉘 외 환경에서 실행할 경우 주석 제거 필요
 val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
@@ -67,7 +67,7 @@ def getMongoDF(
 def getMongoDF2(
                  spark : SparkSession,
                  coll : String ) : DataFrame = {
-  spark.read.mongo(ReadConfig(Map("uri"->(base2+coll))))
+  spark.read.mongo(ReadConfig(Map("uri"->(base+coll))))
 }
 
 //저장하기 setMongo(spark, Uri, dataframe)으로 사용
@@ -78,15 +78,12 @@ def setMongoDF(
   df.saveToMongoDB(WriteConfig(Map("uri"->(base+coll))))
 }
 
-
-
 //추천결과팀 데이터 저장
 def setMongoDF_result(
                        spark : SparkSession,
                        df : DataFrame ) = {
   df.saveToMongoDB(WriteConfig(Map("uri"->(Result_output_base))))
 }
-
 
 def setMongoDF_USER_LIST(
 spark : SparkSession,
@@ -120,7 +117,7 @@ val clInfoUri_table =  getMongoDF(spark, clInfoUri)  //교과 정보 (class info
 val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별점 테이블
 val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사도 분석 팀이 생성한 테이블
 
-object Function{
+// object Function{
   //관심기업 함수
   def INTEREST(std_no:Int):(DataFrame, DataFrame, DataFrame)={
     def mkjobComList (spark:SparkSession, stdNo: Int) : DataFrame = {
@@ -337,21 +334,13 @@ object Function{
     //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
     //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 
-    // /*^^
-    // var std_NO = 20152611
-    //
-    // // 2-1. 학과
-    // var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
-    // var departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
-    // var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
-    // ^^*/
-
     val schema_string = "Similarity"
     val schema_rdd = StructType(schema_string.split(",").map(fieldName => StructField(fieldName, StringType, true)) )
 
     var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
     var departNM_by_stdNO = spark.createDataFrame(sc.emptyRDD[Row], schema_rdd)
 
+    var std_NO = 20152611
     try{
       departNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SUST_CD_NM")).distinct
     }
@@ -362,12 +351,12 @@ object Function{
     }
     var departNM = departNM_by_stdNO.collect().map(_.getString(0)).mkString("")
 
-
     // 2-2. 학과 학생 리스트
     var stdNO_in_departNM_sbjt = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct
     // var stdNO_in_departNM_sbjt = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.limit(10)
-    var stdNO_in_departNM_List = stdNO_in_departNM_sbjt.rdd.map(r=>r(0)).collect.toList.map(_.toString)
-
+    //!!
+    //var stdNO_in_departNM_List = stdNO_in_departNM_sbjt.rdd.map(r=>r(0)).collect.toList.map(_.toString)
+    var stdNO_in_departNM_List = stdNO_in_departNM_sbjt.toDF
 
     // 3-2. 학과의 수업 리스트
     // 컴퓨터공학과에서 개설된 수업명을 리스트로 생성 : 과목명이 1452개 -> distinct 지정distinct하게 자름 => 108개
@@ -376,7 +365,6 @@ object Function{
     var sbjtCD_in_departNM_List = sbjtCD_in_departNM.rdd.map(r=>r(0).toString).collect.toList.distinct.sorted
 
     //학과의 모든 학번(key)이 들은 교과목코드-별점 Map
-
     var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
     // 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
 
@@ -815,7 +803,7 @@ object Function{
 
     MongoSpark.save(
       join_df.write
-        .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY")
+        .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo.USER_LIST_FOR_SIMILARITY")
         .mode("overwrite")
       )
 
@@ -935,7 +923,7 @@ object Function{
 
           MongoSpark.save(
           user_sim_join_df.write
-              .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
+              .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY")
               .mode("overwrite")
             )
           user_sim_join_df
@@ -949,7 +937,7 @@ object Function{
           var user_sim_join_df = spark.createDataFrame(sc.emptyRDD[Row], schema_totalsim)
           MongoSpark.save(
           user_sim_join_df.write
-              .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
+              .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY")
               .mode("overwrite")
             )
           user_sim_join_df
@@ -1211,4 +1199,4 @@ object Main{
 
     var c = calSim(spark, std_no)
   }
-}
+// }

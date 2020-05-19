@@ -1,6 +1,6 @@
 #FileLock
-#Tue May 19 14:31:26 KST 2020
+#Tue May 19 21:20:04 KST 2020
 hostName=DESKTOP-BAFVO66
-id=1722b6a3af20bb0ceba99a146cb9d42c8cecceb68a1
+id=1722ce05b2da2b66678ce691fa242852d583ab8d8a4
 method=file
-server=192.168.128.1\:51918
+server=192.168.128.1\:54055
