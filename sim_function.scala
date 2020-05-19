@@ -491,7 +491,7 @@ join_df.show
 
 MongoSpark.save(
   join_df.write
-    .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY")
+    .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo.USER_LIST_FOR_SIMILARITY")
     .mode("overwrite")
   )
 
@@ -611,7 +611,7 @@ MongoSpark.save(
 
       MongoSpark.save(
       user_sim_join_df.write
-          .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
+          .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY")
           .mode("overwrite")
         )
       user_sim_join_df
@@ -625,7 +625,7 @@ MongoSpark.save(
       var user_sim_join_df = spark.createDataFrame(sc.emptyRDD[Row], schema_totalsim)
       MongoSpark.save(
       user_sim_join_df.write
-          .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY")
+          .option("spark.mongodb.output.uri", "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY")
           .mode("overwrite")
         )
       user_sim_join_df

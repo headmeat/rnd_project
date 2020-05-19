@@ -18,16 +18,16 @@ import org.apache.log4j.Logger
 import org.apache.log4j.Level
 import scala.collection.mutable
 
-val base2 ="mongodb://127.0.0.1/cpmongo."
-val base ="mongodb://127.0.0.1/cpmongo_distinct."
-val output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
-val USER_LIST_FOR_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_LIST_FOR_SIMILARITY"
-val USER_SIM_output_base = "mongodb://127.0.0.1/cpmongo_distinct.USER_SIMILARITY"
-val SREG_output_base = "mongodb://127.0.0.1/cpmongo_distinct.SREG_SIM"
-val NCR_output_base = "mongodb://127.0.0.1/cpmongo_distinct.NCR_SIM"
-val ACT_output_base = "mongodb://127.0.0.1/cpmongo_distinct.ACTIVITY_SIM"
+// val base2 ="mongodb://127.0.0.1/cpmongo."
+val base ="mongodb://127.0.0.1/cpmongo."
+val output_base = "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY"
+val USER_LIST_FOR_SIM_output_base = "mongodb://127.0.0.1/cpmongo.USER_LIST_FOR_SIMILARITY"
+val USER_SIM_output_base = "mongodb://127.0.0.1/cpmongo.USER_SIMILARITY"
+val SREG_output_base = "mongodb://127.0.0.1/cpmongo.SREG_SIM"
+val NCR_output_base = "mongodb://127.0.0.1/cpmongo.NCR_SIM"
+val ACT_output_base = "mongodb://127.0.0.1/cpmongo.ACTIVITY_SIM"
 //교과: SREG_SIM, 비교과: NCR_SIM, 자율활동: ACTIVITY_SIM
-val Result_output_base = "mongodb://127.0.0.1/cpmongo_distinct.Recommend_Result"
+val Result_output_base = "mongodb://127.0.0.1/cpmongo.Recommend_Result"
 
 val comRatingUri = "CPS_RATING"
 val sjobSrhUri = "CPS_EMPLOY_SEARCH_HIS"
@@ -61,11 +61,11 @@ def getMongoDF(
   spark.read.mongo(ReadConfig(Map("uri"->(base+coll))))
 }
 
-def getMongoDF2(
-                 spark : SparkSession,
-                 coll : String ) : DataFrame = {
-  spark.read.mongo(ReadConfig(Map("uri"->(base2+coll))))
-}
+// def getMongoDF2(
+//                  spark : SparkSession,
+//                  coll : String ) : DataFrame = {
+//   spark.read.mongo(ReadConfig(Map("uri"->(base2+coll))))
+// }
 
 //저장하기 setMongo(spark, Uri, dataframe)으로 사용
 def setMongoDF(
