@@ -334,9 +334,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
   var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
 
 
-  var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
-  //var cpsStarUri_DF_ncr = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
-
+  var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+  var cpsStarUri_DF_ncr = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
   var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 
   var outActUri_DF = outActUri_table.select(col("OAM_STD_NO"), col("OAM_TYPE_CD"), col("OAM_TITLE"))
@@ -510,7 +509,7 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     //======================================================================================================
     //======================================================================================================
 
-
+    def ncrFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
     //-------------------- # # # 비교과 리스트 # # # --------------------------------
     // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT)
     // from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
@@ -523,14 +522,12 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
 
     // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
 
-    def ncrFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
-
-    var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
+    var cpsStarUri_DF_ncr = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
     // from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
     var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
 
     // 비교과 별점 => 별점 테이블에서 "TYPE"이 "N" :: ex) NCR000000000677
-    var cpsStarUri_DF_ncr_typeN = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("N"))
+    var cpsStarUri_DF_ncr_typeN = cpsStarUri_DF_ncr.filter(cpsStarUri_DF_ncr("TYPE").equalTo("N"))
     // 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
     val schema1 = StructType(
       StructField("STAR_POINT", StringType, true) ::
@@ -578,9 +575,9 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
       var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
       var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
-      val key_id_temp = tmp1.filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}"))
+      val key_id_temp = tmp1.filter(cpsStarUri_DF_ncr("STD_NO").equalTo(s"${stdNO}"))
       val key_id_List_byStd = key_id_temp.rdd.map{r=> r(0)}.collect.toList
-      val getStar_by_stdNO = cpsStarUri_DF_ncr_typeN.filter(cpsStarUri_DF("STD_NO").equalTo(s"${stdNO}")).toDF
+      val getStar_by_stdNO = cpsStarUri_DF_ncr_typeN.filter(cpsStarUri_DF_ncr("STD_NO").equalTo(s"${stdNO}")).toDF
 
       val tmp3 = getStar_by_stdNO.select(col("STAR_POINT"),col("NPI_KEY_ID"))
 
@@ -641,90 +638,6 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
   //    myResStr = myResStr.concat("\n"+xres)
   //    subcd_byDepart_List = t1
     } //학번 루프 끝
-
-    // val schema1 = StructType(
-    //     StructField("STAR_POINT", StringType, true) ::
-    //     StructField("NPI_KEY_ID", StringType, true) :: Nil)
-    //
-    // val schema2 = StructType(
-    //     StructField("NPI_AREA_SUB_CD", StringType, true) ::
-    //     StructField("NPI_KEY_ID", StringType, true) :: Nil)
-    //
-    //   stdNO_in_departNM_ncr.foreach{ stdNO =>
-    //     var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
-    //     var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
-    //
-    //     val key_id_temp = cpsStarUri_DF_ncr_typeN.select(col("NPI_KEY_ID")).filter(cpsStarUri_DF_ncr("STD_NO").equalTo(s"${stdNO}"))
-    //     val key_id_List_byStd = key_id_temp.rdd.map{r=> r(0)}.collect.toList
-    //
-    //     val kidList = key_id_List_byStd.map { keyid =>
-    //
-    //       //별점 테이블에서 모든 학생의 비교과키, 별점이 있는데 학번 하나에 대한 것만 가져옴 : 학번, 비교과키, 별점, 타입(N)
-    //       var getStar_by_stdNO = cpsStarUri_DF_ncr_typeN.filter(cpsStarUri_DF_ncr("STD_NO").equalTo(s"${stdNO}")).toDF
-    //       //비교과정보DF에서 모든 학생의 중분류, 비교과키가 있는데 학번 하나에 대한 것만 가져옴
-    //       val subcd_keyid_DF_temp = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID")).filter(ncrInfoUri_DF("NPI_KEY_ID").equalTo(s"${keyid}"))
-    //       //학번, 비교과키, 별점, 타입(N)이 있는 DF에서 학번 하나의 비교과키에 해당하는 별점, 비교과키만 가져오기
-    //       val star_keyid_DF_temp = getStar_by_stdNO.select(col("STAR_POINT"),col("NPI_KEY_ID")).filter(getStar_by_stdNO("NPI_KEY_ID").equalTo(s"${keyid}"))
-    //
-    //       star_keyid_DF = star_keyid_DF.union(star_keyid_DF_temp)
-    //       subcd_keyid_DF = subcd_keyid_DF.union(subcd_keyid_DF_temp)
-    //
-    //       val star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, Seq("NPI_KEY_ID"), "left_outer")
-    //
-    //       // agg 연산을 위해 필요없는 비교과 keyid를 지움!!
-    //       val star_subcd_DF = star_subcd_DF_temp.drop("NPI_KEY_ID")
-    //       // star_subcd_DF.show
-    //       val star_subcd_avg_DF = star_subcd_DF.groupBy("NPI_AREA_SUB_CD").agg(avg("STAR_POINT"))
-    //       // star_subcd_avg_DF.show
-    //
-    //       val subcd_byStd_DF2 = star_subcd_DF.drop("STAR_POINT")
-    //
-    //       subcd_byStd_DF = subcd_byStd_DF.union(subcd_byStd_DF2)
-    //
-    //       val subcd_star_temp = star_subcd_avg_DF.collect.map{ row =>
-    //         val str = row.toString
-    //         val size = str.length
-    //         val res = str.substring(1, size-1).split(",")
-    //         val starP = starPoint2(res(0), res(1))
-    //         starP
-    //       }
-    //       // println(subcd_star_temp)
-    //       //
-    //       val subcd_star_record = (stdNO.toString, subcd_star_temp)
-    //       // println(s"star 1 ==== ${subcd_star_record.mkString(",")} \n ====")
-    //       subcd_star_byDepart_Map+=(subcd_star_record)
-    //       //
-    //       val subcd_byDepart_temp = subcd_byStd_DF.collect.map{ row =>
-    //         // 별점만 가져온거
-    //           // println(row)
-    //           val str = row.toString
-    //           val size = str.length
-    //           val res = str.substring(1, size-1).split(",")(0)
-    //           if(tmp_set.add(res)) {
-    //             // println(s"insert new value : ${res}")
-    //             tmp_set.+(res)
-    //           }
-    //           res
-    //       }.sortBy(x => x)
-    //
-    //       val subcd_record_byDepart = (s"$stdNO", subcd_byDepart_temp)
-    //       subcd_byDepart_Map_temp += subcd_record_byDepart
-    //       val t1 = subcd_byDepart_Map_temp.map(x => x._2).flatMap(x => x).toList.distinct
-    //
-    //     }
-    //
-    //    val t1 = subcd_byDepart_Map_temp.map(x => x._2).flatMap(x => x).toList.distinct
-    //    val xres = s"result stdno : ${stdNO} size : ${t1.length} ==--------------------> ${t1}"
-    //    myResStr = myResStr.concat("\n"+xres)
-    //
-    //   subcd_byDepart_List = t1
-    // } //학번 루프 끝
-
-
-
-
-
-
 
       // subcd_star_byDepart_Map
     //----------------------------------------------------------------------------------------------------------------------------
