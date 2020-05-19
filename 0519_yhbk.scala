@@ -342,8 +342,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
   var stdarr = Array(20142820, 20142932, 20152611)
   stdarr.foreach(x =>{
     println("sbjtFunc : ", spark.time(sbjtFunc(spark, x)))
-    // println("ncrFunc : ", spark.time(ncrFunc(spark, x)))
-    // println("actFunc : ", spark.time(actFunc(spark, x)))
+    println("ncrFunc : ", spark.time(ncrFunc(spark, x)))
+    println("actFunc : ", spark.time(actFunc(spark, x)))
   })
 
 
@@ -377,13 +377,19 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
   var sbjtNM_by_stdNO = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${std_NO}")).select(col("SBJT_KEY_CD"))
   var sbjtNM_by_stdNO_List = sbjtNM_by_stdNO.rdd.map(r=>r(0)).collect.toList.distinct
 
+
+
+
+
+
+
   def calSim (spark:SparkSession, std_NO: Int) : DataFrame = {
     //-------------------- # # # 교과목 리스트 # # # --------------------------------
     //--------------------from. 교과목수료 테이블 : 학과명, 학번, 학점----------------------
     //<학과 DataFrame> : departDF / 전체 학과의 모든 학생
 
     def sbjtFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
-    
+
     var cpsStarUri_sbjt_DF = cpsStarUri_DF.filter(cpsStarUri_DF("TYPE").equalTo("C")).drop("TYPE")
 
     case class starPoint(sbjtCD:String, starpoint:Any)
@@ -476,32 +482,14 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     sbjt_df
   }
 
-
-
     //======================================================================================================
     //======================================================================================================
-
 
     //-------------------- # # # 비교과 리스트 # # # --------------------------------
     // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT)
     // from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
 
-    //비교과 아이디(학번, 비교과id 사용 from.교과/비교과별점테이블)로 중분류 가져오기(비교과id, 중분류 from.비교과 관련 테이블)
-
-    //학과 별 학생들이 수강한 비교과의 중분류 list 로 포맷 잡고 : 학과 - 학번 돌면서 list 만들고 , 중분류로 바꿔주기
-    //학생 한명이 수강한 비교과 list -> 별점 가져오기(from. 교과/비교과 별점 테이블) -> 중분류 가져오기 -> 중분류 별 별점 avg 계산
-
-
-    // from. 교과/비교과용 별점 테이블(CPS_STAR_POINT) : 학번(STD_NO), 비교과id(STAR_KEY_ID), 별점(STAR_POINT), 타입(TYPE)
-
     def ncrFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
-    //!!!
-    //var cpsStarUri_DF = cpsStarUri_table.select(col("STD_NO"), col("STAR_KEY_ID").as("NPI_KEY_ID"), col("STAR_POINT"), col("TYPE"))
-    // from. 비교과 관련 테이블(CPS_NCR_PROGRAM_INFO) : 비교과id(NPI_KEY_ID), 중분류(NPI_AREA_SUB_CD)
-    //!!!
-    //var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"), col("NPI_AREA_SUB_CD"))
-
-    // 비교과 별점 => 별점 테이블에서 "TYPE"이 "N" :: ex) NCR000000000677
     var cpsStarUri_DF_ncr_typeN = cpsStarUri_DF_ncr.filter(cpsStarUri_DF_ncr("TYPE").equalTo("N"))
     // 교과 별점 => 별점 테이블에서 "TYPE"이 "C" :: ex) BAQ00028
     val schema1 = StructType(
@@ -523,17 +511,6 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     //----------------------------------------------------------------------------------------------------------------------------
 
     //-----------------------------------------------<학과의 비교과중분류 리스트 생성>------------------------------------------------
-    //!!!
-    //var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
-
-    //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
-    //광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
-
-    //!!!
-    // var departNM = "컴퓨터공학과"
-    var stdNO_in_departNM_ncr = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
-    // Map 타입의 변수 (string, Array)를 인자로 받음
-    // String : 학번, Array : (중분류, 별점)
     case class starPoint2(subcd:String, starpoint2:Any)
     val subcd_star_byDepart_Map = collection.mutable.Map[String, Array[starPoint2]]()
     val subcd_byDepart_Map_temp = collection.mutable.Map[String, Array[String]]()
@@ -547,7 +524,7 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
       //val tmp2 = ncrInfoUri_DF.select(col("NPI_AREA_SUB_CD"),col("NPI_KEY_ID"))
       val tmp2 = ncrInfoUri_DF
 
-    stdNO_in_departNM_ncr.slice(0, 30).foreach { stdNO =>
+    stdNO_in_departNM_List.slice(0, 20).foreach { stdNO =>
       var star_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema1)
       var subcd_keyid_DF = spark.createDataFrame(sc.emptyRDD[Row], schema2)
 
@@ -564,8 +541,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
         star_keyid_DF = star_keyid_DF.union(star_keyid_DF_temp)
         subcd_keyid_DF = subcd_keyid_DF.union(subcd_keyid_DF_temp)
 
-        star_keyid_DF.cache()
-        subcd_keyid_DF.cache()
+        // star_keyid_DF.cache()
+        // subcd_keyid_DF.cache()
 
         val star_subcd_DF_temp = star_keyid_DF.join(subcd_keyid_DF, Seq("NPI_KEY_ID"), "left_outer")
 
@@ -610,7 +587,6 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
       }
     } //학번 루프 끝
 
-
     //----------------------------------------------------------------------------------------------------------------------------
 
     //최종적인 학번 별 별점 리스트 값이 들어있는 시퀀스
@@ -618,7 +594,7 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
 
     var stdNo_List_byMap_ncr = subcd_star_byDepart_Map.keys.toList
 
-    stdNO_in_departNM_ncr.slice(0,30).foreach{ stdNo =>
+    stdNO_in_departNM_List.slice(0,30).foreach{ stdNo =>
 
       var star_point_List = List[Any]() // 학번당 별점을 저장
       var orderedIdx_byStd = List[Int]() //학번 당 중분류 리스트
@@ -652,7 +628,6 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
         star_point_List = star_point_List.updated(orderedIdx_byStd(i), valueBystdNo_from_Map(k).starpoint2)
         // println(s"$star_point_List")
       }
-
     }
       val star_list = star_point_List.map(x => x.toString.toDouble)
       // println(">>"+star_list)
@@ -679,9 +654,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     //var clPassUri_DF_act = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
     //map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
 
-    var stdNO_in_departNM_act = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
-
-
+    //!!!
+    //var stdNO_in_departNM_act = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
 
     //광홍과 학생 중 자율활동 데이터가 있는 학생은 극소수
     // var stdNo_test_df =  outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${20132019}")).select(col("OAM_TYPE_CD"), col("OAM_TITLE"))
@@ -691,7 +665,7 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     var activity_List_byStd = List[Any]()
     var act_tuples = Seq[(String, List[Int])]()
 
-    stdNO_in_departNM_act.foreach{ stdNO =>
+    stdNO_in_departNM_List.foreach{ stdNO =>
 
       var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"), col("OAM_TITLE"), col("OAM_TYPE_CD")).distinct
       //3개의 코드만 필터링
@@ -707,7 +681,7 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     }
 
     //광홍과 학번을 돌면서
-    stdNO_in_departNM_act.foreach{ stdNO =>
+    stdNO_in_departNM_List.foreach{ stdNO =>
 
       var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
 
