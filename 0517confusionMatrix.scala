@@ -264,3 +264,66 @@ list_recommend.foreach{ list =>
 val precision = contain_count.toFloat/list_origin.length
 val recall = contain_count.toFloat/list_recommend.length
 val f_measure = 2*((recall*precision)/(recall+precision))
+
+
+
+##푸티 걔네 노드3대 접속하기
+
+//test용
+// val sbjt_origin = Seq(
+//   ("a1", "a2", "a3", "a3"),
+//   ("a1", "a2", "a3", "a3"),
+//   ("a1", "a2", "a3", "a3"),
+//   ("a1", "a2", "a3", "a3"),
+//   ("b1", "b2", "b3", "b2"),
+//   ("b1", "b2", "b3", "b2"),
+//   ("b4", "b2", "b3", "b2"),
+//   ("b3", "b2", "b3", "b2"),
+//   ("b6", "b2", "b3", "b2"),
+//   ("b6", "b2", "b3", "b2"),
+//   ("b6", "b2", "b3", "b2")
+// ).toDF("code", "code1", "code3", "code4")
+// val sbjt_temp1 = sbjt_origin.groupBy("code").count().orderBy($"count".desc)
+// val sbjt_temp2 = sbjt_temp1.select("code").limit(10)
+// val sbjt_origin_list_10 = sbjt_temp2.rdd.map(r=>r(0)).collect.toList
+
+
+
+//학번으로 학생의 학과 찾기 (dataframe) => 컴퓨터공학과 학생
+//var departNM = clPassUri_DF.filter(clPassUri_DF("STD_NO").equalTo(s"${stdNO}"))
+var departNM = "컴퓨터공학과"
+
+//====================교과======================
+val clPassUri = "V_STD_CDP_PASSCURI" //교과목 수료(class pass)
+var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+
+var sbjt_origin_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM})"))
+var sbjt_origin_temp2 = sbjt_origin_temp1.groupBy("SBJT_KEY_CD").count().orderBy($"count".desc)
+val sbjt_origin_temp3 = sbjt_origin_temp2.select("code").limit(10)
+val sbjt_origin_list_10 = sbjt_origin_temp3.rdd.map(r=>r(0)).collect.toList
+
+//====================비교과======================
+//학과정보가 없어서 (학과-학번)만들고 학번으로 select해야하나 ;;ㅡㅡ
+val ncrInfoUri = "CPS_NCR_PROGRAM_INFO"  //비교과 신청학생 정보에 학과정보 있어야해.ㅣ.;;; => 없어서 학과 학번 만들고 그거로 찾아야할듯..
+var ncrInfoUri_DF = ncrInfoUri_table.select(col("NPI_KEY_ID"))
+
+var ncr_origin_temp1 = ncrInfoUri_DF.filter(ncrInfoUri_DF("SUST_CD_NM").equalTo(s"${departNM})"))
+var ncr_origin_temp2 = ncr_origin_temp1.groupBy("NPI_KEY_ID").count().orderBy($"count".desc)
+val ncr_origin_temp3 = ncr_origin_temp2.select("code").limit(10)
+val ncr_origin_list_10 = ncr_origin_temp3.rdd.map(r=>r(0)).collect.toList
+
+//===================================================
+
+컴공 학과 학번 먼저 만들고
+그 학번이 수강한 ncr..만 select
+그 학번이 비교과 안들었으면 지나치기
+
+
+var clPassUri_DF_ncr = clPassUri_table.select(col("SUST_CD_NM"), col("STD_NO")).distinct.toDF
+
+//map연산은 dataframe에 쓸 수 없기 때문에 list로 변환해야 하며 dataframe을 list로 변환하려면 df의 값 하나하나에 접근하기 위해 map 연산이 필요함
+//광홍과df(clpass 교과목 수료 테이블에서 학과 별 학번 dataframe을 생성한 뒤 list로 변환)
+
+// var departNM = "컴퓨터공학과"
+var stdNO_in_departNM_ncr = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.rdd.map(r=>r(0)).collect.toList.map(_.toString)
+// var stdNO_in_departNM_ncr = clPassUri_DF_ncr.filter(clPassUri_DF_ncr("SUST_CD_NM").equalTo(s"${departNM}")).select(col("STD_NO")).distinct.limit(10).rdd.map(r=>r(0)).collect.toList.map(_.toString)
