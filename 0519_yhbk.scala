@@ -341,8 +341,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
 
   var stdarr = Array(20142820, 20142932, 20152611)
   stdarr.foreach(x =>{
-    println("sbjtFunc : ", spark.time(sbjtFunc(spark, x)))
-    println("ncrFunc : ", spark.time(ncrFunc(spark, x)))
+    // println("sbjtFunc : ", spark.time(sbjtFunc(spark, x)))
+    // println("ncrFunc : ", spark.time(ncrFunc(spark, x)))
     println("actFunc : ", spark.time(actFunc(spark, x)))
   })
 
