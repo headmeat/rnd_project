@@ -662,6 +662,7 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
 
 
     def actFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
+      println(std_NO)
     //-------------------- # # # 자율활동 리스트 # # # ------------------------------
     //from.교외활동 CPS_OUT_ACTIVITY_MNG : 학번(OAM_STD_NO), 활동구분코드(OAM_TYPE_CD), 활동명(OAM_TITLE)
     //자격증(CD01) : 이름(OAM_TITLE) / ex. 토익800~900, FLEX 일본어 2A,  FLEX 일본어 1A,  FLEX 중국어 1A
@@ -685,7 +686,7 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     var act_tuples = Seq[(String, List[Int])]()
 
     stdNO_in_departNM_List.slice(0,20).foreach{ stdNO =>
-
+      println(stdNO)
       var outAct_name_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"), col("OAM_TITLE"), col("OAM_TYPE_CD")).distinct
       //3개의 코드만 필터링
       var outAct_name_temp2 = outAct_name_temp1.drop("OAM_STD_NO", "OAM_TYPE_CD").filter($"OAM_TYPE_CD" === "OAMTYPCD01" || $"OAM_TYPE_CD" ==="OAMTYPCD02").distinct
@@ -700,7 +701,8 @@ val userforSimilarity_table = getMongoDF(spark, userforSimilarityUri) //유사�
     }
 
     //광홍과 학번을 돌면서
-    stdNO_in_departNM_List.foreach{ stdNO =>
+    stdNO_in_departNM_List.slice(0,20).foreach{ stdNO =>
+      println(stdNO)
 
       var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
 
