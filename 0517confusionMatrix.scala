@@ -249,43 +249,11 @@ private[ml] def evaluateClassificationModel(
 //F-measure = 2*((R*P)/(R+P))
 
 
-val list_origin = List("삼성", "네이버", "카카오", "다음", "구글", "하이닉스", "대우", "한화", "엔씨소프트", "현대")
-val list_recommend =  List("LG", "삼성", "카카오", "다음", "하이닉스")
-
-
-var contain_count = 0
-list_recommend.foreach{ list =>
-  if(list_origin.contains(list)){
-    contain_count = contain_count+1
-  }
-  contain_count
-}
-
-val precision = contain_count.toFloat/list_origin.length
-val recall = contain_count.toFloat/list_recommend.length
-val f_measure = 2*((recall*precision)/(recall+precision))
 
 
 
-##푸티 걔네 노드3대 접속하기
 
-//test용
-// val sbjt_origin = Seq(
-//   ("a1", "a2", "a3", "a3"),
-//   ("a1", "a2", "a3", "a3"),
-//   ("a1", "a2", "a3", "a3"),
-//   ("a1", "a2", "a3", "a3"),
-//   ("b1", "b2", "b3", "b2"),
-//   ("b1", "b2", "b3", "b2"),
-//   ("b4", "b2", "b3", "b2"),
-//   ("b3", "b2", "b3", "b2"),
-//   ("b6", "b2", "b3", "b2"),
-//   ("b6", "b2", "b3", "b2"),
-//   ("b6", "b2", "b3", "b2")
-// ).toDF("code", "code1", "code3", "code4")
-// val sbjt_temp1 = sbjt_origin.groupBy("code").count().orderBy($"count".desc)
-// val sbjt_temp2 = sbjt_temp1.select("code").limit(10)
-// val sbjt_origin_list_10 = sbjt_temp2.rdd.map(r=>r(0)).collect.toList
+
 
 
 
@@ -301,6 +269,25 @@ var sbjt_origin_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s
 var sbjt_origin_temp2 = sbjt_origin_temp1.groupBy("SBJT_KEY_CD").count().orderBy($"count".desc)
 val sbjt_origin_temp3 = sbjt_origin_temp2.select("code").limit(10)
 val sbjt_origin_list_10 = sbjt_origin_temp3.rdd.map(r=>r(0)).collect.toList
+
+
+
+val list_origin = List("교과1", "교과2", "카카오", "다음", "구글", "하이닉스", "대우", "한화", "엔씨소프트", "현대")
+val list_recommend =  List("LG", "삼성", "카카오", "다음", "하이닉스")
+
+
+var contain_count = 0
+list_recommend.foreach{ list =>
+  if(list_origin.contains(list)){
+    contain_count = contain_count+1
+  }
+  contain_count
+}
+
+val precision = contain_count.toFloat/list_origin.length
+val recall = contain_count.toFloat/list_recommend.length
+val f_measure = 2*((recall*precision)/(recall+precision))
+
 
 //====================비교과======================
 //학과정보가 없어서 (학과-학번)만들고 학번으로 select해야하나 ;;ㅡㅡ
