@@ -842,7 +842,7 @@ def calculateSim(spark:SparkSession, std_NO: Int) : DataFrame = {
     // var querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${std_NO}")).drop("STD_NO")
     var querySTD = spark.createDataFrame(sc.emptyRDD[Row], schema_rdd)
     try{
-      querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${stdNO}")).drop("STD_NO")
+      querySTD = userforSimilarity_df.filter(userforSimilarity_df("STD_NO").equalTo(s"${std_NO}")).drop("STD_NO")
     }
     catch{
       case e: NoSuchElementException => println("ERROR!")
