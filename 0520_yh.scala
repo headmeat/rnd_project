@@ -338,6 +338,9 @@ val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별�
     // scalastyle:on println
     ret
   }
+  var a = calSim(spark, 20152611)
+
+
 
   // var stdarr = Array(20142820, 20142932, 20152611)
   // var stdarr = Array(20152611)
@@ -667,10 +670,6 @@ val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별�
     def actFunc(spark:SparkSession, std_NO: Int) : DataFrame = {
     //-------------------- # # # 자율활동 리스트 # # # ------------------------------
     //from.교외활동 CPS_OUT_ACTIVITY_MNG : 학번(OAM_STD_NO), 활동구분코드(OAM_TYPE_CD), 활동명(OAM_TITLE)
-    //자격증(CD01) : 이름(OAM_TITLE) / ex. 토익800~900, FLEX 일본어 2A,  FLEX 일본어 1A,  FLEX 중국어 1A
-    //어학(CD02) : 이름(OAM_TITLE)
-    //봉사(CD03), 대외활동(CD04), 기관현장실습(CD05) : 활동구분코드(OAM_TYPE_CD)
-
     var depart_activity_temp = List[Any]()
     var depart_activity_List = List[Any]()
     var activity_List_byStd = List[Any]()
@@ -694,22 +693,12 @@ val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별�
     stdNO_in_departNM_List.foreach{ stdNO =>
 
       var depart_code_list = List[Any]("OAMTYPCD03", "OAMTYPCD04", "OAMTYPCD05")
-      //List1 : 코드(중복제거x) -> map 함수로 df에서 list 변환
-      //List2 : 이름(중복제거) -> map 함수로 df에서 list 변환
-      //List3 : List1 + List2 = 코드리스트 + 이름리스트 (학생 한명이 수행한 자율활동내용)
-      //---------------------자율활동 code list(자격증01, 어학02)----------------------
-      //5개의 코드 (학생 한명이 수행한 봉사03, 대외04, 기관05을 코드 별로 groupby count list)
       var outAct_code_temp1 = outActUri_DF.filter(outActUri_DF("OAM_STD_NO").equalTo(s"${stdNO}")).select(col("OAM_STD_NO"),col("OAM_TYPE_CD"), col("OAM_TITLE"))
       //3개의 코드만 필터링
       var outAct_code_temp2 = outAct_code_temp1.filter($"OAM_TYPE_CD" === "OAMTYPCD03" || $"OAM_TYPE_CD" ==="OAMTYPCD04" || $"OAM_TYPE_CD" ==="OAMTYPCD05")
       //학생 한명의 활동 코드만 존재하는 dataframe
 
       var outAct_code_temp3 = outAct_code_temp2.drop("OAM_STD_NO", "OAM_TITLE").groupBy("OAM_TYPE_CD").count()
-      //모든 학과 모든 학생이 수행한 자율활동은 총 845개인데
-      //광홍과 201937039학생이 수행한 활동만 260개이고 나머지 광홍과 학생들의 데이터는 존재하지 않음
-
-      //이제 코드 3개에 대해 groupby와 agg 연산을 사용하여 코드 별로 count
-      // var outAct_code_List = outAct_code_temp3.select(col("count")).rdd.map(r=>r(0)).collect.toList
       val maps = scala.collection.mutable.Map[String, Int]()
 
       for(i<-0 until depart_code_list.size){
@@ -735,13 +724,6 @@ val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별�
 
       var outAct_name_List = outAct_name_temp2.rdd.map(r=>r(0)).collect.toList
 
-      // //----------codeList + nameList = 학생 하나의 리스트-----------------------------
-      // // var outAct_std_List = outAct_code_List ::: outAct_name_List
-      // // outAct_std_List
-      // //----------------------------------------------------------------
-      //namelist로 유무 비교
-      //학생 name list 랑 학과 list를 비교해서 contain으로 1, 0
-
       var activity_List_byStd_temp1 = depart_activity_List.map(x => (x, 0)).map{ activity =>
         //x : record_1
         //0 : record_2
@@ -753,25 +735,12 @@ val cpsStarUri_table = getMongoDF(spark, cpsStarUri)  //교과/비교과용 별�
             1
           }
           else -1
-          // if(outAct_name_List.contains(actName)) {
-          //   var act = 1
-          // }else{
-          //   var act = -1
-          // }
 
         var activity_List_byStd_temp2 = (actName, act)
-        // println(activity_List_byStd_temp2)
-        //리턴하려면 이름을 쳐야 함
-        //최종적으로 isListened_List_temp1 = isListened_List_temp2 값이 담기는 것 !!
         activity_List_byStd_temp2
       }
       var activity_List_byStd_temp3 = activity_List_byStd_temp1.map(_._2)
 
-      //학과 리스트를 돌면서 일치 여부 세는데
-      //봉사03, 대외04, 기관05 = 횟수 count
-      //자격증01, 어학02 = 유무(1 또는 0)
-
-     // activity_List_byStd = outAct_code_List ++ activity_List_byStd_temp3
      activity_List_byStd = head ++ activity_List_byStd_temp3
 
      val act_list = activity_List_byStd.map(x => x.toString.toInt)
@@ -1198,7 +1167,37 @@ object Main{
     var i = INTEREST(std_no)
     var t = TRUST(i._1, i._2, i._3)
     var c = calSim(spark, std_no)
-    var r = recResult(std_no, t, c, i._1, i._2, i._3)
+    var r = recResult(std_no, t, c, i._1, i._2, i._3) //return하는거 수정해서 <예측결과셋 리스트>
+
+
+
+
+    val clPassUri = "V_STD_CDP_PASSCURI" //교과목 수료(class pass)
+    var clPassUri_DF = clPassUri_table.select(col("STD_NO"), col("SUST_CD_NM"), col("SBJT_KOR_NM"), col("SBJT_KEY_CD")).distinct.toDF
+
+    var sbjt_origin_temp1 = clPassUri_DF.filter(clPassUri_DF("SUST_CD_NM").equalTo(s"${departNM}"))
+    var sbjt_origin_temp2 = sbjt_origin_temp1.groupBy("SBJT_KEY_CD").count().orderBy($"count".desc)
+    val sbjt_origin_temp3 = sbjt_origin_temp2.select("SBJT_KEY_CD").limit(10)
+    val sbjt_origin_list_10 = sbjt_origin_temp3.rdd.map(r=>r(0)).collect.toList //<정답셋 리스트>
+
+
+
+    //val list_origin = List("교과1", "교과2", "카카오", "다음", "구글", "하이닉스", "대우", "한화", "엔씨소프트", "현대")
+    //val list_recommend =  List("LG", "삼성", "카카오", "다음", ㄱ"하이닉스")
+
+
+    var contain_count = 0
+    r.foreach{ list =>
+      if(sbjt_origin_list_10.contains(list)){
+        contain_count = contain_count+1
+      }
+      contain_count
+    }
+
+    val precision = contain_count.toFloat/sbjt_origin_list_10.length
+    val recall = contain_count.toFloat/r.length
+    val f_measure = 2*((recall*precision)/(recall+precision))
+
   }
 
   def main2(args:Array[String]):Unit={
